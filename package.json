@@ -1,0 +1,26 @@
+{
+  "name": "docu-watch",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "monorepo-setup": "pnpm install && pnpm --filter @docu-watch/backend exec poetry install",
+    "dev": "concurrently \"pnpm run dev:frontend\" \"pnpm run dev:backend\"",
+    "dev:frontend": "pnpm --filter @docu-watch/frontend dev",
+    "dev:backend": "pnpm --filter @docu-watch/backend dev",
+    "build": "pnpm -r build",
+    "prepare": "husky",
+    "format": "pnpm run format:frontend && pnpm run format:backend",
+    "format:frontend": "pnpm --filter @docu-watch/frontend format",
+    "format:backend": "pnpm --filter @docu-watch/backend format",
+    "format:check": "pnpm run format:check:frontend && pnpm run format:check:backend",
+    "format:check:frontend": "pnpm --filter @docu-watch/frontend format:check",
+    "format:check:backend": "pnpm --filter @docu-watch/backend format:check"
+  },
+  "keywords": [],
+  "author": "kiranbaby14",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "husky": "^9.1.7"
+  }
+}

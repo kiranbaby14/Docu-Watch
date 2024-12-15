@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "docu-watch-backend"
+version = "0.1.0"
+description = "Backend service for DocuWatch application"
+authors = ["kiranbaby14 <kiranbaby256@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.6"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
