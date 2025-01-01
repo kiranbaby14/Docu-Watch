@@ -23,3 +23,7 @@ build/
 .env
 .env.*
 !.env.example
+
+# Security key files
+private.key
+public.key

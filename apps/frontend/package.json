@@ -11,6 +11,8 @@
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
   "dependencies": {
+    "@types/js-cookie": "^3.0.6",
+    "js-cookie": "^3.0.5",
     "next": "15.1.0",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "react": "^19.0.0",
