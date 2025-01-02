@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface Contract {
   envelope_id: string;
@@ -26,8 +27,6 @@ const ContractsList = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            // Handle token expiration
-            // You might want to redirect to login or refresh the token
             throw new Error('Session expired');
           }
           throw new Error('Failed to fetch contracts');
@@ -48,7 +47,11 @@ const ContractsList = () => {
   }, [token]);
 
   if (loading) {
-    return <div>Loading contracts...</div>;
+    return (
+      <div className="flex min-h-[200px] items-center justify-center">
+        <LoadingSpinner size="lg" className="text-blue-500" />
+      </div>
+    );
   }
 
   if (error) {
