@@ -13,6 +13,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Get token from URL if present
     const accessToken = searchParams.get('access_token');
+
     if (accessToken) {
       setToken(accessToken);
       // Remove token from URL
@@ -21,7 +22,7 @@ export default function Dashboard() {
       // If no token in URL or stored, redirect to login
       router.replace('/');
     }
-  }, [searchParams, setToken, router, token]);
+  }, [searchParams]);
 
   if (!token) {
     return (

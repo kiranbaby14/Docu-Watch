@@ -12,6 +12,7 @@ docusign-esign = "^4.0.0"
 itsdangerous = "^2.2.0"
 python-dotenv = "^1.0.1"
 requests = "^2.32.3"
+pydantic-settings = "^2.7.1"
 
 
 [tool.poetry.group.dev.dependencies]
