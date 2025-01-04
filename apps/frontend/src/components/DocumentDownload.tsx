@@ -57,7 +57,7 @@ const DocumentDownload: React.FC<DocumentDownloadProps> = ({
       // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       console.error('Download error:', err);
     } finally {

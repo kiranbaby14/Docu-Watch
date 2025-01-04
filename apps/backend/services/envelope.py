@@ -1,47 +1,21 @@
 from docusign_esign import ApiClient, EnvelopesApi
 from fastapi import HTTPException
-import requests
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Tuple
 
-from core.config import CONFIG
 
-
-class DocuSignService:
-    def __init__(self, token: str):
+class EnvelopeService:
+    def __init__(self, token: str, account_id: str, base_uri: str):
         self.token = token
-        self.api_client = None
-        self.account_id = None
-        self.base_uri = None
-        self._initialize_client()
+        self.account_id = account_id
+        self.base_uri = base_uri
+        self.api_client = self._create_api_client()
 
-    def _initialize_client(self) -> None:
-        """Initialize DocuSign client and get account information"""
-        try:
-            # Get user info
-            headers = {"Authorization": f"Bearer {self.token}"}
-            user_info = requests.get(
-                f"{CONFIG['authorization_server']}/oauth/userinfo", headers=headers
-            ).json()
-
-            if not user_info.get("accounts"):
-                raise HTTPException(
-                    status_code=400, detail="No DocuSign accounts found for this user"
-                )
-
-            self.account_id = user_info["accounts"][0]["account_id"]
-            self.base_uri = user_info["accounts"][0]["base_uri"]
-
-            # Initialize API client
-            self.api_client = ApiClient()
-            self.api_client.host = f"{self.base_uri}/restapi"
-            self.api_client.set_default_header("Authorization", f"Bearer {self.token}")
-
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to initialize DocuSign client: {str(e)}",
-            )
+    def _create_api_client(self):
+        api_client = ApiClient()
+        api_client.host = f"{self.base_uri}/restapi"
+        api_client.set_default_header("Authorization", f"Bearer {self.token}")
+        return api_client
 
     async def get_completed_envelopes(self) -> List[Dict[str, Any]]:
         """Get all completed envelopes"""

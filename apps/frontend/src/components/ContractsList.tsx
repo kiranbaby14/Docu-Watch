@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { DocumentDownload } from './DocumentDownload';
+import { useRouter } from 'next/navigation';
 
 interface Document {
   document_id: string;
@@ -21,11 +22,17 @@ interface Contract {
 }
 
 const ContractsList = () => {
-  const { token } = useAuth();
+  const router = useRouter();
+  const { token, signOut } = useAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedContract, setExpandedContract] = useState<string | null>(null);
+
+  const handleSessionExpired = async () => {
+    // Clear auth state
+    await signOut();
+  };
 
   useEffect(() => {
     const fetchContracts = async () => {
@@ -41,7 +48,8 @@ const ContractsList = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Session expired');
+            await handleSessionExpired();
+            // throw new Error('Session expired');
           }
           throw new Error('Failed to fetch contracts');
         }

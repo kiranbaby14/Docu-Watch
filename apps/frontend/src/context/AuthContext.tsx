@@ -6,7 +6,7 @@ import Cookies from 'js-cookie';
 interface AuthContextType {
   token: string | null;
   setToken: (token: string | null) => void;
-  logout: () => void;
+  signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,13 +38,13 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
+  const signOut = () => {
     setToken(null);
     router.push('/');
   };
 
   return (
-    <AuthContext.Provider value={{ token, setToken, logout }}>
+    <AuthContext.Provider value={{ token, setToken, signOut }}>
       {children}
     </AuthContext.Provider>
   );

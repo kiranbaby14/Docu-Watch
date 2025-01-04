@@ -1,57 +1,34 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import RedirectResponse
 import requests
-from core.config import CONFIG
-from schemas.envelopes import Token
+from urllib.parse import urlencode
+
+from core.settings import Settings, get_settings
+from schemas.envelope import TokenSchema
+from services.auth import AuthService
 
 router = APIRouter(tags=["authentication"])
 
 
+def get_auth_service(settings: Settings = Depends(get_settings)) -> AuthService:
+    return AuthService(settings)
+
+
 @router.get("/login")
-async def login():
-    auth_url = (
-        f"{CONFIG['authorization_server']}/oauth/auth?"
-        f"response_type=code&"
-        f"client_id={CONFIG['ds_client_id']}&"
-        f"redirect_uri={CONFIG['app_url']}{CONFIG['callback_route']}&"
-        f"scope=signature%20extended"
-    )
-    return RedirectResponse(auth_url)
+async def login(auth_service: AuthService = Depends(get_auth_service)):
+    login_url = auth_service.get_login_url()
+    return RedirectResponse(login_url)
 
 
 @router.get("/callback")
-async def callback(code: str):
-    token_url = f"{CONFIG['authorization_server']}/oauth/token"
-    data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "client_id": CONFIG["ds_client_id"],
-        "client_secret": CONFIG["ds_client_secret"],
-        "redirect_uri": f"{CONFIG['app_url']}{CONFIG['callback_route']}",
-    }
-
-    response = requests.post(token_url, data=data)
-    if response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Token acquisition failed")
-
-    frontend_url = "http://localhost:3000/dashboard"
-    return RedirectResponse(
-        url=f"{frontend_url}?access_token={response.json()['access_token']}"
-    )
+async def callback(code: str, auth_service: AuthService = Depends(get_auth_service)):
+    redirect_url = await auth_service.exchange_code_for_token(code)
+    return RedirectResponse(url=redirect_url)
 
 
 @router.post("/refresh")
-async def refresh_token(refresh_token: str):
-    token_url = f"{CONFIG['authorization_server']}/oauth/token"
-    data = {
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
-        "client_id": CONFIG["ds_client_id"],
-        "client_secret": CONFIG["ds_client_secret"],
-    }
-
-    response = requests.post(token_url, data=data)
-    if response.status_code != 200:
-        raise HTTPException(status_code=401, detail="Token refresh failed")
-
-    return Token(**response.json())
+async def refresh_token(
+    refresh_token: str, auth_service: AuthService = Depends(get_auth_service)
+):
+    token_data = await auth_service.refresh_token(refresh_token)
+    return TokenSchema(**token_data)

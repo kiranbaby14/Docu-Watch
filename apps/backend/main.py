@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2AuthorizationCodeBearer
 import uvicorn
 
 from api.routes import auth, envelopes
-from core.config import CONFIG
 
 
 app = FastAPI(title="DocuSign Integration API", root_path="/api")

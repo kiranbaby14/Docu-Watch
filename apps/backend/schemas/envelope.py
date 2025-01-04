@@ -1,9 +1,8 @@
 from pydantic import BaseModel
-from datetime import datetime
 from typing import Optional
 
 
-class Envelope(BaseModel):
+class EnvelopeSchema(BaseModel):
     envelope_id: str
     status: str
     subject: str
@@ -11,7 +10,7 @@ class Envelope(BaseModel):
     last_modified: str
 
 
-class Token(BaseModel):
+class TokenSchema(BaseModel):
     access_token: str
     token_type: str
     expires_in: int
