@@ -29,5 +29,7 @@ private.key
 public.key
 raw_envelopes.json
 
+data/
+
 # Remove later
 main23.py

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
-from services.envelope import EnvelopeService
-from processors.document import DocumentProcessor
+from services.docusign import EnvelopeService
+from services.processors.document import DocumentProcessor
 from core.oauth2 import oauth2_scheme
-from apps.backend.core.settings import Settings
+from core.settings import Settings
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 

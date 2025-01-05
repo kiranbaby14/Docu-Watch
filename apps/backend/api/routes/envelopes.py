@@ -1,34 +1,63 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from fastapi.responses import FileResponse
-from typing import List
-from services.envelope import EnvelopeService
-from schemas.envelope import EnvelopeSchema
-from schemas.document import EnvelopeDocuments
+from typing import List, Optional, Dict
+from services.docusign import EnvelopeService
+from services.document import DocumentDownloader
+from services.notification import WebhookService
+from services.tracking import BatchProgressTracker
+from schemas import EnvelopeSchema, EnvelopeDocumentsSchema, WebhookSchema
 from core.oauth2 import validate_docusign_access
+
 
 router = APIRouter(prefix="/envelopes", tags=["envelopes"])
 
 
 @router.get("/", response_model=List[EnvelopeSchema])
-async def get_envelopes(auth_info: dict = Depends(validate_docusign_access)):
-    docusign_envelope_service = EnvelopeService(
+async def get_envelopes(
+    background_tasks: BackgroundTasks,
+    webhook_url: Optional[str] = "http://localhost:8000/webhook/docusign",
+    webhook_headers: Optional[Dict[str, str]] = {},
+    auth_info: dict = Depends(validate_docusign_access),
+):
+    """Get all completed envelopes and trigger background document downloads"""
+    # Initialize services
+    envelope_service = EnvelopeService(
         token=auth_info["token"],
         account_id=auth_info["account_id"],
         base_uri=auth_info["base_uri"],
     )
-    return await docusign_envelope_service.get_completed_envelopes()
+
+    # Get all completed envelopes
+    envelopes = await envelope_service.get_completed_envelopes()
+
+    webhook_service = None
+    batch_progress = None
+    if webhook_url:
+        webhook_config = WebhookSchema(url=webhook_url, headers=webhook_headers)
+        webhook_service = WebhookService(webhook_config)
+        batch_progress = BatchProgressTracker(len(envelopes), webhook_service)
+
+    downloader = DocumentDownloader(envelope_service, webhook_service, batch_progress)
+
+    # Start background downloads
+    for envelope in envelopes:
+        background_tasks.add_task(
+            downloader.download_envelope_documents, envelope["envelope_id"]
+        )
+
+    return envelopes
 
 
-@router.get("/{envelope_id}/documents", response_model=EnvelopeDocuments)
+@router.get("/{envelope_id}/documents", response_model=EnvelopeDocumentsSchema)
 async def list_envelope_documents(
     envelope_id: str, auth_info: dict = Depends(validate_docusign_access)
 ):
-    docusign_envelope_service = EnvelopeService(
+    envelope_service = EnvelopeService(
         token=auth_info["token"],
         account_id=auth_info["account_id"],
         base_uri=auth_info["base_uri"],
     )
-    return await docusign_envelope_service.get_envelope_documents(envelope_id)
+    return await envelope_service.get_envelope_documents(envelope_id)
 
 
 @router.get("/{envelope_id}/documents/{document_id}/download")
@@ -38,14 +67,14 @@ async def download_document(
     auth_info: dict = Depends(validate_docusign_access),
 ):
     """Download a document from an envelope"""
-    docusign_envelope_service = EnvelopeService(
+    envelope_service = EnvelopeService(
         token=auth_info["token"],
         account_id=auth_info["account_id"],
         base_uri=auth_info["base_uri"],
     )
 
-    temp_file_path, content_type, filename = (
-        await docusign_envelope_service.get_document(envelope_id, document_id)
+    temp_file_path, content_type, filename = await envelope_service.get_document(
+        envelope_id, document_id
     )
 
     return FileResponse(path=temp_file_path, media_type=content_type, filename=filename)

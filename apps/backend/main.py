@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from api.routes import auth, envelopes
+from api.routes import auth, envelopes, webhook
 
 
 app = FastAPI(title="DocuSign Integration API", root_path="/api")
@@ -19,6 +19,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router)
 app.include_router(envelopes.router)
+app.include_router(webhook.router)
 
 
 if __name__ == "__main__":

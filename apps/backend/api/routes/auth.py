@@ -1,11 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
-import requests
-from urllib.parse import urlencode
 
 from core.settings import Settings, get_settings
-from schemas.envelope import TokenSchema
-from services.auth import AuthService
+from schemas import TokenSchema
+from services.docusign import AuthService
 
 router = APIRouter(tags=["authentication"])
 

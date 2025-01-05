@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from typing import Dict, Any, BinaryIO, Union
+from typing import Dict, Any, Union
 from io import BytesIO
 import hashlib
 

@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 
 
-class DocumentBase(BaseModel):
+class DocumentBaseSchema(BaseModel):
     """Base document model with common fields"""
 
     document_id: str = Field(..., description="Unique identifier of the document")
@@ -13,7 +13,7 @@ class DocumentBase(BaseModel):
     )
 
 
-class DocumentInfo(DocumentBase):
+class DocumentInfoSchema(DocumentBaseSchema):
     """Extended document information including URI and optional metadata"""
 
     uri: str = Field(..., description="URI to download the document")
@@ -22,13 +22,13 @@ class DocumentInfo(DocumentBase):
     file_extension: Optional[str] = Field(None, description="File extension")
 
 
-class EnvelopeDocuments(BaseModel):
+class EnvelopeDocumentsSchema(BaseModel):
     """Collection of documents within an envelope"""
 
     envelope_id: str = Field(
         ..., description="ID of the envelope containing the documents"
     )
-    documents: List[DocumentInfo] = Field(
+    documents: List[DocumentInfoSchema] = Field(
         ..., description="List of documents in the envelope"
     )
     created_date: datetime = Field(
