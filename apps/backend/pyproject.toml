@@ -20,6 +20,8 @@ pypdf2 = "^3.0.1"
 pdf2image = "^1.17.0"
 google-generativeai = "^0.8.3"
 openai = "^1.60.1"
+semantic-kernel = "^1.19.0"
+neo4j-graphrag = "^1.4.2"
 
 
 [tool.poetry.group.dev.dependencies]
