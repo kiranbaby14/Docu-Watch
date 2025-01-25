@@ -64,6 +64,8 @@ async def validate_docusign_access(token: str = Depends(oauth2_scheme)):
             "account_id": user_info["accounts"][0]["account_id"],
             "base_uri": user_info["accounts"][0]["base_uri"],
         }
-
+    except HTTPException:
+        # Re-raise any HTTP exceptions without modification
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

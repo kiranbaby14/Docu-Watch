@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-      "dev": "poetry run uvicorn app.main:app --reload",
+      "dev": "poetry run uvicorn main:app --reload",
       "start": "poetry run uvicorn app.main:app",
       "lint": "poetry run pylint app/",
       "format": "poetry run black .",
