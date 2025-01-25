@@ -1,0 +1,102 @@
+Generate a valid JSON document. Do not include anything else other than the JSON document
+Using the Answers to the following questions and The schema of the resulting JSON file ( which is specified further down)
+In your answers, Use information exclusively on this contract. 
+
+1) What type of contract is this? 
+2) Who are the parties and their roles? Where are they incorporated? Name state and country (use ISO 3166 Country name)
+3) What is the Agreement Date? (if absolute date is mentioned use yyyy-mm-dd)
+4) What is the Effective date? (if absolute date is mentioned use yyyy-mm-dd)
+5) What is the expiration date? (if absolute date is mentioned use yyyy-mm-dd)
+6) What is the Renewal Term ? 
+7) What is the Notice Period To Terminate Renewal? 
+8) What is the governing law ? 
+Name the state and country (use ISO 3166 Country name)
+9) If multiple countries are in the governing law, what is the most favoured country? if there is only one country just repeat the same information for governing law 
+
+10) For each of the contract clause types, extract the following: 
+a) A Yes/No that indicates if you think the clause is found in this contract 
+b) A list of full (long) excerpts, directly taken from the contract that give you reason to believe that this this clause type exists. 
+
+The only Contract Clause types are: Competitive Restriction Exception, Non-Compete, Exclusivity, No-Solicit Of Customers,
+No-Solicit Of Employees, Non-Disparagement, Termination For Convenience, Rofr/Rofo/Rofn, Change Of Control, 
+Anti-Assignment, Revenue/Profit Sharing, Price Restrictions, Minimum Commitment,Volume Restriction, 
+IP Ownership Assignment, Joint IP Ownership, License grant, Non-Transferable License, 
+Affiliate License-Licensor, Affiliate License-Licensee,Unlimited/All-You-Can-Eat-License,Irrevocable Or Perpetual License, 
+Source Code Escrow, Post-Termination Services, Audit Rights, Uncapped Liability, Cap On Liability, Liquidated Damages, 
+Warranty Duration, Insurance, Covenant Not To Sue, Third Party Beneficiary.
+
+11) For each clause in the contract, identify any potential risks:
+a) Risk Type (LEGAL, FINANCIAL, COMPLIANCE, OPERATIONAL)
+b) Risk Description
+c) Risk Level (HIGH, MEDIUM, LOW)
+d) Potential Impact
+
+12) Identify all obligations in the contract:
+a) Description of the obligation
+b) Due date (if specified, use yyyy-mm-dd)
+c) Whether it's recurring (true/false)
+d) Recurrence pattern (if applicable: MONTHLY, QUARTERLY, YEARLY)
+e) Current status (PENDING, COMPLETED, OVERDUE, CANCELLED)
+
+13) Are there any industry-specific patterns or unusual clauses in this contract compared to standard contracts of this type?
+
+Finally, Using the answers to the questions above, provide your final answer in a JSON document.
+Make sure the JSON document is VALID and adheres to the correct format. 
+ 
+The JSON document has the following structure: 
+
+{
+  "agreement": {
+    "agreement_name": "string",
+    "agreement_type": "string",
+    "effective_date": "string",
+    "expiration_date": "string",
+    "renewal_term": "string",
+    "Notice_period_to_Terminate_Renewal": "string",
+    "parties": [
+      {
+        "role": "string",
+        "name": "string",
+        "incorporation_country": "string",
+        "incorporation_state": "string"
+      }
+    ],
+    "governing_law": {
+      "country": "string",
+      "state": "string",
+      "most_favored_country": "string"
+    },
+    "clauses": [
+      {
+        "clause_type": "string",
+        "exists": "boolean",
+        "excerpts": ["string"]
+      }
+    ],
+    "risks": [
+      {
+        "risk_type": "string",
+        "description": "string",
+        "level": "string",
+        "impact": "string",
+        "related_clause": "string"
+      }
+    ],
+    "obligations": [
+      {
+        "description": "string",
+        "due_date": "string",
+        "recurring": boolean,
+        "recurrence_pattern": "string",
+        "status": "string",
+        "reminder_days": integer
+      }
+    ],
+    "industry_patterns": {
+      "industry": "string",
+      "unusual_clauses": ["string"],
+      "common_patterns": ["string"]
+    }
+  }
+}
+Ensure the JSON is valid and correctly formatted.
