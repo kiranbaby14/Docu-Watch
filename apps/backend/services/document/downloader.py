@@ -3,25 +3,28 @@ from ..notification import WebhookService
 from ..tracking import ProgressTracker, BatchProgressTracker
 from ..docusign import EnvelopeService
 import os
+import asyncio
 
 
 class DocumentDownloader:
     def __init__(
         self,
         envelope_service: EnvelopeService,
+        len_envelopes: str,
         webhook_service: Optional[WebhookService] = None,
-        batch_progress: Optional[BatchProgressTracker] = None,
     ):
         self.envelope_service = envelope_service
         self.webhook_service = webhook_service
         self.progress_tracker = ProgressTracker(webhook_service)
-        self.batch_progress = batch_progress
+        self.batch_progress = BatchProgressTracker(len_envelopes, webhook_service)
+        self.completed_envelopes = 0
+        self.total_envelopes = len_envelopes
+        self._download_complete = asyncio.Event()
 
         # Get account_id from envelope_service
         self.account_id = envelope_service.account_id
 
-        # Get the backend directory path (going up 3 levels from downloader.py)
-        # downloader.py -> document -> services -> backend
+        # Get the backend directory path
         backend_dir = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
@@ -41,7 +44,7 @@ class DocumentDownloader:
                 envelope_id, len(docs_info["documents"])
             )
 
-            # Register with batch tracker if available
+            # Register with batch tracker
             if self.batch_progress:
                 await self.batch_progress.register_envelope(
                     envelope_id, len(docs_info["documents"])
@@ -64,33 +67,34 @@ class DocumentDownloader:
 
                 # Check if file already exists
                 if os.path.exists(final_path):
-                    # Clean up temp file since we won't use it
                     if os.path.exists(temp_file_path):
                         os.remove(temp_file_path)
                     existing_files.append(filename)
                 else:
-                    # Move new file to final location
                     os.rename(temp_file_path, final_path)
                     downloaded_files.append(filename)
 
-                # Update progress regardless of whether file was new or existing
+                # Update progress
                 await self.progress_tracker.update_document_progress(
                     envelope_id, filename
                 )
 
-                # Update batch progress if available
                 if self.batch_progress:
                     await self.batch_progress.update_envelope_progress(
                         envelope_id, filename
                     )
 
-            # Mark envelope complete with all files
+            # Mark envelope complete
             all_files = downloaded_files + existing_files
             await self.progress_tracker.complete_envelope(envelope_id, all_files)
 
-            # Update batch progress if available
+            # Update batch progress
             if self.batch_progress:
                 await self.batch_progress.complete_envelope(envelope_id)
+                self.completed_envelopes += 1
+
+                if self.completed_envelopes >= self.total_envelopes:
+                    self._download_complete.set()
 
             return envelope_dir, {
                 "downloaded": downloaded_files,
@@ -100,3 +104,7 @@ class DocumentDownloader:
         except Exception as e:
             await self.progress_tracker.mark_envelope_failed(envelope_id, str(e))
             raise
+
+    async def wait_for_downloads(self):
+        """Wait for all downloads to complete"""
+        await self._download_complete.wait()

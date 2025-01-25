@@ -21,7 +21,7 @@ class EnvelopeService:
         """Get all completed envelopes"""
         try:
             envelope_api = EnvelopesApi(self.api_client)
-            from_date = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
+            from_date = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
 
             response = envelope_api.list_status_changes(
                 account_id=self.account_id,
@@ -71,6 +71,7 @@ class EnvelopeService:
                         "uri": f"/api/envelopes/{envelope_id}/documents/{doc.document_id}/download",
                     }
                     for doc in docs_list.envelope_documents
+                    if doc.type != "summary"  # Filter out summary documents
                 ],
                 "created_date": envelope.created_date_time,
                 "status": envelope.status,
@@ -104,7 +105,7 @@ class EnvelopeService:
                 (
                     doc
                     for doc in docs_list.envelope_documents
-                    if doc.document_id == document_id
+                    if doc.document_id == document_id and doc.type != "summary"
                 ),
                 None,
             )

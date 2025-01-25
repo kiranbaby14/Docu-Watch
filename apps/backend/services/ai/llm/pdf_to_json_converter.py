@@ -8,9 +8,11 @@ from openai.types.beta.threads.message_create_params import (
     AttachmentToolFileSearch,
 )
 from dotenv import load_dotenv
+from typing import Optional
 
 from utils import read_text_file, save_json_string_to_file, extract_json_from_string
 from ..neo4j.neo4j_indexer import Neo4jIndexer
+from ...notification import WebhookService
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -18,8 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class PDFProcessor:
-    def __init__(self):
+    def __init__(self, webhook_service: Optional[WebhookService] = None):
         load_dotenv()
+
+        self.webhook_service = webhook_service
 
         # Initialize OpenAI client
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -209,6 +213,26 @@ class PDFProcessor:
 
         except Exception as e:
             logger.error(f"Application error: {e}")
+            raise
+
+    async def process_background(self):
+        """Process PDFs asynchronously with webhook notifications"""
+        try:
+            self.run()
+            if self.webhook_service:
+                await self.webhook_service.send_notification(
+                    {
+                        "status": "completed",
+                        "message": "PDF processing completed successfully",
+                    }
+                )
+        except Exception as e:
+            error_msg = f"Error processing PDFs: {e}"
+            logger.error(error_msg)
+            if self.webhook_service:
+                await self.webhook_service.send_notification(
+                    {"status": "error", "message": error_msg}
+                )
             raise
 
 

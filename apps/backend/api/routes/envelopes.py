@@ -5,6 +5,7 @@ from services.docusign import EnvelopeService
 from services.document import DocumentDownloader
 from services.notification import WebhookService
 from services.tracking import BatchProgressTracker
+from services.ai import PDFProcessor
 from schemas import EnvelopeSchema, EnvelopeDocumentsSchema, WebhookSchema
 from core.oauth2 import validate_docusign_access
 
@@ -31,19 +32,26 @@ async def get_envelopes(
     envelopes = await envelope_service.get_completed_envelopes()
 
     webhook_service = None
-    batch_progress = None
     if webhook_url:
         webhook_config = WebhookSchema(url=webhook_url, headers=webhook_headers)
         webhook_service = WebhookService(webhook_config)
-        batch_progress = BatchProgressTracker(len(envelopes), webhook_service)
 
-    downloader = DocumentDownloader(envelope_service, webhook_service, batch_progress)
+    # Initialize services
+    downloader = DocumentDownloader(envelope_service, len(envelopes), webhook_service)
+    pdf_processor = PDFProcessor(webhook_service)
 
     # Start background downloads
     for envelope in envelopes:
         background_tasks.add_task(
             downloader.download_envelope_documents, envelope["envelope_id"]
         )
+
+    # Add tasks to wait for downloads and process PDFs
+    async def process_after_download():
+        await downloader.wait_for_downloads()
+        await pdf_processor.process_background()
+
+    background_tasks.add_task(process_after_download)
 
     return envelopes
 
