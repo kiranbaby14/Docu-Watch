@@ -16,7 +16,7 @@ router = APIRouter(prefix="/envelopes", tags=["envelopes"])
 @router.get("/", response_model=List[EnvelopeSchema])
 async def get_envelopes(
     background_tasks: BackgroundTasks,
-    webhook_url: Optional[str] = "http://localhost:8000/webhook/docusign",
+    webhook_url: Optional[str] = None,
     webhook_headers: Optional[Dict[str, str]] = {},
     auth_info: dict = Depends(validate_docusign_access),
 ):

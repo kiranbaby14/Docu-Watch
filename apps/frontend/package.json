@@ -11,13 +11,19 @@
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
   "dependencies": {
+    "@radix-ui/react-progress": "^1.1.1",
+    "@radix-ui/react-scroll-area": "^1.2.2",
     "@types/js-cookie": "^3.0.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.469.0",
     "next": "15.1.0",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

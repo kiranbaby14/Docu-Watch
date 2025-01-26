@@ -13,6 +13,8 @@ from typing import Optional
 from utils import read_text_file, save_json_string_to_file, extract_json_from_string
 from ..neo4j.neo4j_indexer import Neo4jIndexer
 from ...notification import WebhookService
+from ...tracking import ProgressTracker, BatchProgressTracker
+from schemas.webhook import ProcessingPhase
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +26,10 @@ class PDFProcessor:
         load_dotenv()
 
         self.webhook_service = webhook_service
+        self.progress_tracker = ProgressTracker(
+            webhook_service, phase=ProcessingPhase.PDF_TO_JSON
+        )
+        self.batch_tracker = None  # Will be initialized when we know total files
 
         # Initialize OpenAI client
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -49,9 +55,9 @@ class PDFProcessor:
         )
 
         # Initialize Neo4j indexer
-        self.neo4j_indexer = Neo4jIndexer()
+        self.neo4j_indexer = Neo4jIndexer(webhook_service)
 
-    def process_pdf(self, pdf_path: str | Path) -> str | None:
+    async def process_pdf(self, envelope_id: str, pdf_path: str | Path) -> str | None:
         """Process a single PDF file and return the extracted content"""
         logger.info(f"Processing {pdf_path}...")
 
@@ -62,6 +68,11 @@ class PDFProcessor:
             # Upload PDF file
             file = self.client.files.create(
                 file=open(pdf_path, "rb"), purpose="assistants"
+            )
+
+            # Update progress before starting
+            await self.progress_tracker.update_document_progress(
+                envelope_id, str(pdf_path)
             )
 
             # Create assistant message with attachment
@@ -83,17 +94,29 @@ class PDFProcessor:
             )
 
             if run.status != "completed":
+                await self.progress_tracker.mark_envelope_failed(
+                    envelope_id, f"Run failed: {run.status}"
+                )
                 raise Exception("Run failed:", run.status)
 
             # Retrieve messages
             messages = list(self.client.beta.threads.messages.list(thread_id=thread.id))
-            return messages[0].content[0].text.value
+            result = messages[0].content[0].text.value
+
+            # Update batch progress
+            if self.batch_tracker:
+                await self.batch_tracker.update_envelope_progress(
+                    envelope_id, str(pdf_path)
+                )
+
+            return result
 
         except Exception as e:
+            await self.progress_tracker.mark_envelope_failed(envelope_id, str(e))
             logger.error(f"Error processing PDF {pdf_path}: {e}")
             return None
 
-    def process_directory(self, base_dir: str | Path) -> bool:
+    async def process_directory(self, base_dir: str | Path) -> bool:
         """Process all PDFs in the directory structure"""
         base_path = Path(base_dir)
         docusign_path = base_path / "docusign_downloads"
@@ -107,6 +130,12 @@ class PDFProcessor:
         debug_base = base_path / "debug"
         output_base.mkdir(exist_ok=True)
         debug_base.mkdir(exist_ok=True)
+
+        # Count total PDFs for batch tracking
+        total_pdfs = sum(1 for _ in docusign_path.rglob("*.pdf"))
+        self.batch_tracker = BatchProgressTracker(
+            total_pdfs, self.webhook_service, phase=ProcessingPhase.PDF_TO_JSON
+        )
 
         json_files_created = False
 
@@ -123,15 +152,36 @@ class PDFProcessor:
             account_output.mkdir(exist_ok=True)
             account_debug.mkdir(exist_ok=True)
 
+            # Register envelope with trackers
+            envelope_id = account_dir.name
+            total_pdfs_in_account = len(list(account_dir.rglob("*.pdf")))
+            await self.progress_tracker.start_envelope(
+                envelope_id, total_pdfs_in_account
+            )
+            await self.batch_tracker.register_envelope(
+                envelope_id, total_pdfs_in_account
+            )
+
             # Process envelopes
-            json_files_created |= self._process_account_envelopes(
-                account_dir, account_output, account_debug
+            created = await self._process_account_envelopes(
+                envelope_id, account_dir, account_output, account_debug
+            )
+            json_files_created |= created
+
+            # Mark envelope complete
+            await self.batch_tracker.complete_envelope(envelope_id)
+            await self.progress_tracker.complete_envelope(
+                envelope_id, [str(p) for p in account_output.rglob("*.json")]
             )
 
         return json_files_created
 
-    def _process_account_envelopes(
-        self, account_dir: Path, account_output: Path, account_debug: Path
+    async def _process_account_envelopes(
+        self,
+        envelope_id: str,
+        account_dir: Path,
+        account_output: Path,
+        account_debug: Path,
     ) -> bool:
         """Process all envelopes in an account directory"""
         json_files_created = False
@@ -152,18 +202,22 @@ class PDFProcessor:
             contract_pdfs = list(envelope_dir.glob("*.pdf"))
 
             if contract_pdfs:
-                json_files_created |= self._process_envelope_pdf(
-                    contract_pdfs[0], envelope_output, envelope_debug
+                created = await self._process_envelope_pdf(
+                    envelope_id, contract_pdfs[0], envelope_output, envelope_debug
                 )
-
+                json_files_created |= created
         return json_files_created
 
-    def _process_envelope_pdf(
-        self, pdf_path: Path, envelope_output: Path, envelope_debug: Path
+    async def _process_envelope_pdf(
+        self,
+        envelope_id: str,
+        pdf_path: Path,
+        envelope_output: Path,
+        envelope_debug: Path,
     ) -> bool:
         """Process a single PDF in an envelope directory"""
         try:
-            complete_response = self.process_pdf(pdf_path)
+            complete_response = await self.process_pdf(envelope_id, pdf_path)
             if not complete_response:
                 return False
 
@@ -192,11 +246,11 @@ class PDFProcessor:
 
         return False
 
-    def run(self):
+    async def run(self):
         """Main execution method"""
         try:
             # Process PDFs to JSON
-            json_files_created = self.process_directory("./data")
+            json_files_created = await self.process_directory("./data")
 
             # Index to Neo4j if files were created
             if json_files_created:
@@ -204,7 +258,7 @@ class PDFProcessor:
                     "JSON files created successfully. Starting Neo4j indexing..."
                 )
                 try:
-                    self.neo4j_indexer.index_documents(base_dir="./data")
+                    await self.neo4j_indexer.index_documents(base_dir="./data")
                     logger.info("Neo4j indexing completed successfully")
                 except Exception as e:
                     logger.error(f"Error during Neo4j indexing: {e}")
@@ -218,21 +272,21 @@ class PDFProcessor:
     async def process_background(self):
         """Process PDFs asynchronously with webhook notifications"""
         try:
-            self.run()
-            if self.webhook_service:
-                await self.webhook_service.send_notification(
-                    {
-                        "status": "completed",
-                        "message": "PDF processing completed successfully",
-                    }
-                )
+            await self.run()
+            # if self.webhook_service:
+            #     await self.webhook_service.send_notification(
+            #         {
+            #             "status": "completed",
+            #             "message": "PDF processing completed successfully",
+            #         }
+            #     )
         except Exception as e:
             error_msg = f"Error processing PDFs: {e}"
             logger.error(error_msg)
-            if self.webhook_service:
-                await self.webhook_service.send_notification(
-                    {"status": "error", "message": error_msg}
-                )
+            # if self.webhook_service:
+            #     await self.webhook_service.send_notification(
+            #         {"status": "error", "message": error_msg}
+            #     )
             raise
 
 

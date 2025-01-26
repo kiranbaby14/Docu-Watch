@@ -4,7 +4,6 @@ from typing import Dict
 router = APIRouter(prefix="/webhook", tags=["webhook"])
 
 # Simple in-memory storage for progress
-# In production, you might want to use Redis or a database
 progress_store: Dict[str, dict] = {}
 
 

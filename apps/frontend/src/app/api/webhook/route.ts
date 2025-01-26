@@ -1,33 +1,44 @@
-// app/api/webhook/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+// src/app/api/webhook/route.ts
+import { NextRequest } from 'next/server';
+import type { StoredWebhookMessage, WebhookMessage } from '@/types/webhook';
 
-export async function POST(req: NextRequest) {
+// Store messages in memory (in production you might want to use a proper storage solution)
+let webhookMessages: StoredWebhookMessage[] = [];
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
+    const body = (await request.json()) as WebhookMessage;
 
-    // Here you can handle the webhook data
-    // For example, you might want to:
-    // 1. Validate the webhook signature if needed
-    // 2. Process the document download status
-    // 3. Update your database or client state
-    // 4. Trigger any necessary notifications
+    // Add timestamp and store message
+    const storedMessage: StoredWebhookMessage = {
+      ...body,
+      timestamp: new Date().toISOString()
+    };
 
-    console.log('Received webhook:', body);
+    webhookMessages.push(storedMessage);
 
-    // You might want to emit a server-sent event or use websockets
-    // to notify the frontend about updates
-
-    return NextResponse.json({ success: true }, { status: 200 });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   } catch (error) {
     console.error('Webhook error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   }
 }
 
-// Optional: Handle verification requests if your webhook provider uses them
-export async function GET(req: NextRequest) {
-  return NextResponse.json({ status: 'ok' }, { status: 200 });
+export async function GET(request: NextRequest) {
+  return new Response(JSON.stringify(webhookMessages), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 }
