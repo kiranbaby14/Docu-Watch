@@ -22,6 +22,9 @@ class Neo4jIndexer:
     WITH $data AS data
     WITH data.agreement as a
 
+    // Account node
+    MERGE (account:Account {account_id: a.account_id})
+
     // Agreement node
     MERGE (agreement:Agreement {contract_id: a.contract_id})
     ON CREATE SET 
@@ -31,6 +34,9 @@ class Neo4jIndexer:
     agreement.agreement_type = a.agreement_type,
     agreement.renewal_term = a.renewal_term,
     agreement.most_favored_country = a.governing_law.most_favored_country
+
+    // Create relationship between Account and Agreement
+    MERGE (account)-[:HAS_AGREEMENT]->(agreement)
 
     // Governing law
     MERGE (gl_country:Country {name: a.governing_law.country})
@@ -272,9 +278,15 @@ class Neo4jIndexer:
                 json_string = file.read()
                 json_data = json.loads(json_string)
 
+                # Get the account_id from the directory structure
+                # json_file.parent is envelope dir, json_file.parent.parent is account dir
+                account_id = json_file.parent.parent.name
+
                 # Add contract_id to the agreement
                 agreement = json_data["agreement"]
                 agreement["contract_id"] = contract_id
+                agreement["account_id"] = account_id
+                print(account_id)
 
                 # Execute Neo4j statement
                 self.driver.execute_query(self.CREATE_GRAPH_STATEMENT, data=json_data)

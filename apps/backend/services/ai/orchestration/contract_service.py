@@ -19,9 +19,10 @@ from utils import my_vector_search_excerpt_record_formatter
 
 
 class ContractSearchService:
-    def __init__(self, uri, user, pwd):
+    def __init__(self, uri, user, pwd, account_id: str):
         driver = GraphDatabase.driver(uri, auth=(user, pwd))
         self._driver = driver
+        self._account_id = account_id  # Store account_id
         self._openai_embedder = OpenAIEmbeddings(model="text-embedding-3-small")
         # Create LLM object. Used to generate the CYPHER queries
         self._llm = OpenAILLM(model_name="gpt-4o", model_params={"temperature": 0})
@@ -29,7 +30,8 @@ class ContractSearchService:
     async def get_contract(self, contract_id: int) -> Agreement:
 
         GET_CONTRACT_BY_ID_QUERY = """
-            MATCH (a:Agreement {contract_id: $contract_id})-[:HAS_CLAUSE]->(clause:ContractClause)
+            MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement {contract_id: $contract_id})
+            MATCH (a)-[:HAS_CLAUSE]->(clause:ContractClause)
             WITH a, collect(clause) as clauses
             MATCH (country:Country)-[i:INCORPORATED_IN]-(p:Organization)-[r:IS_PARTY_TO]-(a)
             WITH a, clauses, collect(p) as parties, collect(country) as countries, collect(r) as roles, collect(i) as states
@@ -39,7 +41,8 @@ class ContractSearchService:
         agreement_node = {}
 
         records, _, _ = self._driver.execute_query(
-            GET_CONTRACT_BY_ID_QUERY, {"contract_id": contract_id}
+            GET_CONTRACT_BY_ID_QUERY,
+            {"contract_id": contract_id, "account_id": self._account_id},
         )
 
         if len(records) == 1:
@@ -62,6 +65,7 @@ class ContractSearchService:
 
     async def get_contracts(self, organization_name: str) -> List[Agreement]:
         GET_CONTRACTS_BY_PARTY_NAME = """
+            MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement)
             CALL db.index.fulltext.queryNodes('organizationNameTextIndex', $organization_name)
             YIELD node AS o, score
             WITH o, score
@@ -76,7 +80,8 @@ class ContractSearchService:
 
         # run the Cypher query
         records, _, _ = self._driver.execute_query(
-            GET_CONTRACTS_BY_PARTY_NAME, {"organization_name": organization_name}
+            GET_CONTRACTS_BY_PARTY_NAME,
+            {"organization_name": organization_name, "account_id": self._account_id},
         )
 
         # Build the result
@@ -104,7 +109,8 @@ class ContractSearchService:
         self, clause_type: ClauseType
     ) -> List[Agreement]:
         GET_CONTRACT_WITH_CLAUSE_TYPE_QUERY = """
-            MATCH (a:Agreement)-[:HAS_CLAUSE]->(cc:ContractClause {type: $clause_type})
+            MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement)
+            MATCH (a)-[:HAS_CLAUSE]->(cc:ContractClause {type: $clause_type})
             WITH a
             MATCH (country:Country)-[i:INCORPORATED_IN]-(p:Organization)-[r:IS_PARTY_TO]-(a:Agreement)
             RETURN a as agreement, collect(p) as parties, collect(r) as roles, collect(country) as countries, collect(i) as states
@@ -112,7 +118,8 @@ class ContractSearchService:
         """
         # run the Cypher query
         records, _, _ = self._driver.execute_query(
-            GET_CONTRACT_WITH_CLAUSE_TYPE_QUERY, {"clause_type": str(clause_type.value)}
+            GET_CONTRACT_WITH_CLAUSE_TYPE_QUERY,
+            {"clause_type": str(clause_type.value), "account_id": self._account_id},
         )
         # Process the results
 
@@ -140,7 +147,7 @@ class ContractSearchService:
         self, clause_type: ClauseType
     ) -> List[Agreement]:
         GET_CONTRACT_WITHOUT_CLAUSE_TYPE_QUERY = """
-            MATCH (a:Agreement)
+            MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement)
             OPTIONAL MATCH (a)-[:HAS_CLAUSE]->(cc:ContractClause {type: $clause_type})
             WITH a,cc
             WHERE cc is NULL
@@ -151,7 +158,8 @@ class ContractSearchService:
 
         # run the Cypher query
         records, _, _ = self._driver.execute_query(
-            GET_CONTRACT_WITHOUT_CLAUSE_TYPE_QUERY, {"clause_type": clause_type.value}
+            GET_CONTRACT_WITHOUT_CLAUSE_TYPE_QUERY,
+            {"clause_type": clause_type.value, "account_id": self._account_id},
         )
 
         all_agreements = []
@@ -176,7 +184,8 @@ class ContractSearchService:
 
         # Cypher to traverse from the semantically similar excerpts back to the agreement
         EXCERPT_TO_AGREEMENT_TRAVERSAL_QUERY = """
-            MATCH (a:Agreement)-[:HAS_CLAUSE]->(cc:ContractClause)-[:HAS_EXCERPT]-(node) 
+            MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement)
+            MATCH (a)-[:HAS_CLAUSE]->(cc:ContractClause)-[:HAS_EXCERPT]-(node) 
             RETURN a.name as agreement_name, a.contract_id as contract_id, cc.type as clause_type, node.text as excerpt
         """
 
@@ -190,7 +199,11 @@ class ContractSearchService:
         )
 
         # run vector search query on excerpts and get results containing the relevant agreement and clause
-        retriever_result = retriever.search(query_text=clause_text, top_k=3)
+        retriever_result = retriever.search(
+            query_text=clause_text,
+            top_k=3,
+            query_params={"account_id": self._account_id},
+        )
 
         # set up List of Agreements (with partial data) to be returned
         agreements = []
@@ -214,6 +227,7 @@ class ContractSearchService:
 
         NEO4J_SCHEMA = """
             Node properties:
+            Account {account_id: STRING}
             Agreement {agreement_type: STRING, contract_id: INTEGER,effective_date: STRING,renewal_term: STRING, name: STRING}
             ContractClause {type: STRING}
             ClauseType {name: STRING}
