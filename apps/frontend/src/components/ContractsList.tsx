@@ -30,15 +30,28 @@ const ContractsList = () => {
   const [expandedContract, setExpandedContract] = useState<string | null>(null);
 
   const handleSessionExpired = async () => {
-    // Clear auth state
     await signOut();
   };
 
   useEffect(() => {
     const fetchContracts = async () => {
       try {
+        // Create URLSearchParams to handle query parameters
+        const params = new URLSearchParams({
+          webhook_url: `${window.location.origin}/api/webhook` // You'll need to create this API route
+        });
+
+        // Add any custom headers your webhook might need
+        const webhookHeaders = {
+          'x-custom-source': 'frontend',
+          'x-client-id': 'your-client-id' // Add any necessary headers
+        };
+
+        // Encode headers as a JSON string in the query params
+        params.append('webhook_headers', JSON.stringify(webhookHeaders));
+
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/envelopes`,
+          `${process.env.NEXT_PUBLIC_API_URL}/envelopes?${params.toString()}`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -49,7 +62,6 @@ const ContractsList = () => {
         if (!response.ok) {
           if (response.status === 401) {
             await handleSessionExpired();
-            // throw new Error('Session expired');
           }
           throw new Error('Failed to fetch contracts');
         }
@@ -68,6 +80,7 @@ const ContractsList = () => {
     }
   }, [token]);
 
+  // Rest of the component remains the same
   const fetchDocuments = async (envelopeId: string) => {
     try {
       const response = await fetch(
