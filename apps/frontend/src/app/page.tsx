@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function Home() {
-  const { token } = useAuth();
+  const { token, accountId } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (token) {
-      router.replace('/dashboard');
+      router.replace(`${accountId}/dashboard`);
     }
   }, [token, router]);
 

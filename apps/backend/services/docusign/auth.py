@@ -2,6 +2,7 @@ from fastapi import HTTPException
 import requests
 from urllib.parse import urlencode
 from core.settings import Settings
+from core.oauth2 import validate_docusign_access
 
 
 class AuthService:
@@ -32,13 +33,18 @@ class AuthService:
             raise HTTPException(status_code=400, detail="Token acquisition failed")
 
         token_data = response.json()
-        redirect_url = self.get_frontend_redirect_url(token_data["access_token"])
+        # Use validate_docusign_access to get account info
+        auth_info = await validate_docusign_access(token_data["access_token"])
+
+        redirect_url = self.get_frontend_redirect_url(
+            token_data["access_token"], auth_info["account_id"]
+        )
 
         return redirect_url
 
-    def get_frontend_redirect_url(self, access_token: str) -> str:
+    def get_frontend_redirect_url(self, access_token: str, account_id: str) -> str:
         """Construct frontend redirect URL with token"""
-        return f"{self.settings.frontend_callback_url}?access_token={access_token}"
+        return f"{self.settings.frontend_url}/{account_id}{self.settings.frontend_callback_route}?access_token={access_token}&account_id={account_id}"
 
     async def refresh_token(self, refresh_token: str) -> dict:
         token_url = f"{self.settings.authorization_server}/oauth/token"

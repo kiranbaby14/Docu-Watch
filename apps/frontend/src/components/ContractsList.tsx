@@ -11,6 +11,10 @@ import type {
   ProcessingPhase
 } from '@/types/webhook';
 
+interface ContractsListProps {
+  accountId: string;
+}
+
 interface Document {
   document_id: string;
   name: string;
@@ -27,7 +31,7 @@ interface Contract {
   documents?: Document[];
 }
 
-const ContractsList = () => {
+const ContractsList = ({ accountId }: ContractsListProps) => {
   const { token, signOut } = useAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +46,7 @@ const ContractsList = () => {
 
   const checkProcessingStatus = async () => {
     try {
-      const response = await fetch('/api/webhook');
+      const response = await fetch(`/api/webhook/${accountId}`);
       const messages: StoredWebhookMessage[] = await response.json();
 
       // Get the current phase from the latest message
@@ -76,8 +80,13 @@ const ContractsList = () => {
         currentPhase
       });
 
-      // If not complete, check again in 2 seconds
-      if (!isComplete) {
+      // If processing is complete, clear the messages for the account_id
+      if (isComplete) {
+        await fetch(`/api/webhook/${accountId}`, {
+          method: 'DELETE'
+        });
+      } else {
+        // If not complete, check again in 2 seconds
         setTimeout(checkProcessingStatus, 2000);
       }
     } catch (err) {
@@ -128,7 +137,7 @@ const ContractsList = () => {
   const fetchContracts = async () => {
     try {
       const params = new URLSearchParams({
-        webhook_url: `${window.location.origin}/api/webhook`
+        webhook_url: `${window.location.origin}/api/webhook/${accountId}`
       });
 
       const response = await fetch(
