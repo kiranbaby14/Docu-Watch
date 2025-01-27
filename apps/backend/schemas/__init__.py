@@ -1,6 +1,7 @@
 from .document import DocumentBaseSchema, DocumentInfoSchema, EnvelopeDocumentsSchema
 from .envelope import EnvelopeSchema, TokenSchema, UserSchema
 from .webhook import WebhookSchema, TerminateMessage
+from .chat import ChatMessage, ChatResponse
 from .agreement import (
     Party,
     GoverningLaw,
@@ -33,4 +34,6 @@ __all__ = [
     "ObligationStatus",
     "Obligation",
     "UserSchema",
+    "ChatMessage",
+    "ChatResponse",
 ]

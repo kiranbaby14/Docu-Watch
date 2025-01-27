@@ -44,4 +44,4 @@ const UserProfile = ({ email, name, onLogout }: UserProfileProps) => {
   );
 };
 
-export default UserProfile;
+export { UserProfile };
