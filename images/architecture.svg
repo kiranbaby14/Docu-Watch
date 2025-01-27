@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+    <!-- Background -->
+    <rect width="1200" height="800" fill="#f8fafc" />
+    
+    <!-- Frontend Group -->
+    <g transform="translate(50, 50)">
+        <rect x="0" y="0" width="250" height="300" rx="10" fill="#2563eb" opacity="0.1" stroke="#2563eb" stroke-width="2"/>
+        <text x="20" y="40" font-family="Arial" font-size="16" fill="#1e40af" font-weight="bold">Frontend (Next.js)</text>
+        
+        <!-- Frontend Components -->
+        <!-- Login UI -->
+        <g transform="translate(20, 60)">
+            <rect width="210" height="40" rx="5" fill="#2563eb" />
+            <circle cx="25" cy="20" r="12" fill="white"/>
+            <path d="M25,14 a6,6 0 1,1 0,12 a6,6 0 1,1 0,-12" fill="#2563eb"/>
+            <path d="M25,28 c6,0 12,3 12,6" stroke="#2563eb" fill="none"/>
+            <text x="120" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Login UI</text>
+        </g>
+
+                    <!-- Progress Modal -->
+        <g transform="translate(20, 110)">
+            <rect width="210" height="40" rx="5" fill="#2563eb" />
+            <rect x="10" y="10" width="20" height="20" fill="white"/>
+            <text x="120" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Progress Modal</text>
+        </g>
+
+        <!-- Dashboard -->
+        <g transform="translate(20, 160)">
+            <rect width="210" height="40" rx="5" fill="#2563eb" />
+            <path d="M10,20 h20 M10,25 h15 M10,30 h10" stroke="white" stroke-width="2"/>
+            <text x="120" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Analytics Dashboard</text>
+        </g>
+
+        <!-- Chat Interface -->
+        <g transform="translate(20, 210)">
+            <rect width="210" height="40" rx="5" fill="#2563eb" />
+            <path d="M15,25 a10,10 0 1,1 20,0 l-10,8 l-10,-8" fill="white"/>
+            <text x="120" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Chat Interface</text>
+        </g>
+    </g>
+
+    <!-- Backend Group -->
+    <g transform="translate(450, 50)">
+        <rect x="0" y="0" width="300" height="450" rx="10" fill="#059669" opacity="0.1" stroke="#059669" stroke-width="2"/>
+        <text x="20" y="40" font-family="Arial" font-size="16" fill="#047857" font-weight="bold">Backend (FastAPI)</text>
+        
+        <!-- Backend Components -->
+        <!-- OAuth Handler -->
+        <g transform="translate(20, 60)">
+            <rect width="260" height="40" rx="5" fill="#059669" />
+            <path d="M15,20 a10,10 0 1,1 20,0 M25,30 v-15" stroke="white" fill="none" stroke-width="2"/>
+            <text x="160" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">OAuth2 Handler</text>
+        </g>
+
+        <!-- Webhook Handler -->
+        <g transform="translate(20, 110)">
+            <rect width="260" height="40" rx="5" fill="#059669" />
+            <path d="M15,20 l10,-10 l10,10 l10,-10" stroke="white" fill="none" stroke-width="2"/>
+            <text x="160" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Webhook Handler</text>
+        </g>
+
+        <!-- Semantic Kernel -->
+        <g transform="translate(20, 160)">
+            <rect width="260" height="40" rx="5" fill="#059669" />
+            <path d="M15,20 l20,0 M25,10 l0,20" stroke="white" stroke-width="2"/>
+            <text x="160" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Microsoft Semantic Kernel</text>
+        </g>
+
+        <!-- Processing Pipeline -->
+        <g transform="translate(20, 210)">
+            <rect width="260" height="200" rx="5" fill="#059669" opacity="0.7"/>
+            <text x="130" y="30" font-family="Arial" font-size="14" fill="white" text-anchor="middle">Processing Pipeline</text>
+            
+            <!-- Download Task -->
+            <g transform="translate(20, 50)">
+                <rect width="220" height="30" rx="3" fill="#047857"/>
+                <text x="110" y="20" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Download Agreements</text>
+            </g>
+
+            <!-- PDF to JSON -->
+            <g transform="translate(20, 90)">
+                <rect width="220" height="30" rx="3" fill="#047857"/>
+                <text x="110" y="20" font-family="Arial" font-size="12" fill="white" text-anchor="middle">PDF to JSON Parser</text>
+            </g>
+
+            <!-- JSON to Graph -->
+            <g transform="translate(20, 130)">
+                <rect width="220" height="30" rx="3" fill="#047857"/>
+                <text x="110" y="20" font-family="Arial" font-size="12" fill="white" text-anchor="middle">JSON to Graph Builder</text>
+            </g>
+        </g>
+    </g>
+
+    <!-- External Services -->
+    <g transform="translate(900, 50)">
+        <rect x="0" y="0" width="250" height="300" rx="10" fill="#6366f1" opacity="0.1" stroke="#6366f1" stroke-width="2"/>
+        <text x="20" y="40" font-family="Arial" font-size="16" fill="#4f46e5" font-weight="bold">External Services</text>
+        
+        <!-- DocuSign -->
+        <g transform="translate(20, 60)">
+            <rect width="210" height="40" rx="5" fill="#6366f1" />
+            <path d="M15,20 c5,-5 15,-5 20,0 c5,5 15,5 20,0" stroke="white" fill="none" stroke-width="2"/>
+            <text x="120" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">DocuSign API</text>
+        </g>
+
+        <!-- OpenAI -->
+        <g transform="translate(20, 110)">
+            <rect width="210" height="40" rx="5" fill="#6366f1" />
+            <circle cx="25" cy="20" r="8" fill="white"/>
+            <text x="120" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">OpenAI LLM</text>
+        </g>
+
+        <!-- Neo4j -->
+        <g transform="translate(20, 160)">
+            <rect width="210" height="40" rx="5" fill="#6366f1" />
+            <path d="M15,20 l20,0 M25,10 l0,20" stroke="white" stroke-width="2"/>
+            <text x="120" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Neo4j Graph DB</text>
+        </g>
+    </g>
+
+    <!-- Webhook Notifications Flow -->
+    <g transform="translate(50, 500)">
+        <rect width="1100" height="100" rx="10" fill="#f43f5e" opacity="0.1" stroke="#f43f5e" stroke-width="2"/>
+        <text x="20" y="40" font-family="Arial" font-size="16" fill="#e11d48" font-weight="bold">Real-time Updates via Webhooks</text>
+        
+        <!-- Notification Flow -->
+        <g transform="translate(50, 60)">
+            <circle cx="0" cy="0" r="5" fill="#f43f5e"/>
+            <text x="30" y="5" font-family="Arial" font-size="12" fill="#f43f5e">Start</text>
+            
+            <path d="M50,0 L150,0" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="100" y="-10" font-family="Arial" font-size="10" fill="#f43f5e">Download</text>
+            
+            <circle cx="200" cy="0" r="5" fill="#f43f5e"/>
+            <path d="M250,0 L350,0" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="300" y="-10" font-family="Arial" font-size="10" fill="#f43f5e">Processing</text>
+            
+            <circle cx="400" cy="0" r="5" fill="#f43f5e"/>
+            <path d="M450,0 L550,0" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="500" y="-10" font-family="Arial" font-size="10" fill="#f43f5e">Graph Building</text>
+            
+            <circle cx="600" cy="0" r="5" fill="#f43f5e"/>
+            <text x="630" y="5" font-family="Arial" font-size="12" fill="#f43f5e">Complete</text>
+        </g>
+    </g>
+
+    <!-- Connecting Lines -->
+    <g stroke="#94a3b8" stroke-width="2" fill="none">
+        <!-- Frontend to Backend -->
+        <path d="M 300,200 L 450,200" marker-end="url(#arrowhead)"/>
+        
+        <!-- Backend to External -->
+        <path d="M 750,200 L 900,200" marker-end="url(#arrowhead)"/>
+        
+        <!-- Webhook Notifications to Frontend -->
+        <path d="M 470,130 C 400,130 350,130 300,130" stroke="#f43f5e" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#webhookArrow)"/>
+        
+        <!-- Backend to Webhook Flow -->
+        <path d="M 750,130 C 800,130 800,550 750,550" stroke="#f43f5e" stroke-width="2" stroke-dasharray="5,5"/>
+    </g>
+
+    <!-- Markers -->
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+        </marker>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#f43f5e"/>
+        </marker>
+        <marker id="webhookArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#f43f5e"/>
+        </marker>
+    </defs>
+
+    <!-- Legend -->
+    <g transform="translate(50, 650)">
+        <rect width="1100" height="100" rx="10" fill="white" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="20" y="40" font-family="Arial" font-size="16" fill="#475569" font-weight="bold">Legend</text>
+        
+        <!-- Legend Items -->
+        <g transform="translate(20, 60)">
+            <circle cx="10" cy="0" r="5" fill="#2563eb"/>
+            <text x="30" y="5" font-family="Arial" font-size="12" fill="#475569">User Interface Components</text>
+            
+            <circle cx="200" cy="0" r="5" fill="#059669"/>
+            <text x="220" y="5" font-family="Arial" font-size="12" fill="#475569">Backend Services</text>
+            
+            <circle cx="400" cy="0" r="5" fill="#6366f1"/>
+            <text x="420" y="5" font-family="Arial" font-size="12" fill="#475569">External APIs</text>
+            
+            <circle cx="600" cy="0" r="5" fill="#f43f5e"/>
+            <text x="620" y="5" font-family="Arial" font-size="12" fill="#475569">Webhook Notifications</text>
+
+            <g transform="translate(800, -5)">
+                <line x1="0" y1="5" x2="30" y2="5" stroke="#f43f5e" stroke-width="2" stroke-dasharray="5,5"/>
+                <text x="50" y="10" font-family="Arial" font-size="12" fill="#475569">Real-time Updates</text>
+            </g>
+        </g>
+    </g>
+</svg>
