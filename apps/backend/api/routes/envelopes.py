@@ -9,6 +9,7 @@ from services.document import DocumentDownloader
 from services.notification import WebhookService
 from services.ai import PDFProcessor
 from schemas import (
+    UserSchema,
     EnvelopeSchema,
     EnvelopeDocumentsSchema,
     WebhookSchema,
@@ -20,7 +21,7 @@ from core.oauth2 import validate_docusign_access
 router = APIRouter(prefix="/envelopes", tags=["envelopes"])
 
 
-@router.get("/", response_model=List[EnvelopeSchema])
+@router.get("/", response_model=UserSchema)
 async def get_envelopes(
     background_tasks: BackgroundTasks,
     webhook_url: Optional[str] = None,
@@ -49,25 +50,28 @@ async def get_envelopes(
                 webhook_termination_message.model_dump()
             )
 
-    # Initialize services
-    downloader = DocumentDownloader(envelope_service, len(envelopes), webhook_service)
-    pdf_processor = PDFProcessor(webhook_service)
+    await webhook_service.send_notification(webhook_termination_message.model_dump())
 
-    # Start background downloads
-    for envelope in envelopes:
-        background_tasks.add_task(
-            downloader.download_envelope_documents, envelope["envelope_id"]
-        )
+    # # Initialize services
+    # downloader = DocumentDownloader(envelope_service, len(envelopes), webhook_service)
+    # pdf_processor = PDFProcessor(webhook_service)
 
-    # Add tasks to wait for downloads and process PDFs
-    async def process_after_download():
-        await downloader.wait_for_downloads()
-        await pdf_processor.process_background(auth_info["account_id"])
+    # # Start background downloads
+    # for envelope in envelopes:
+    #     background_tasks.add_task(
+    #         downloader.download_envelope_documents, envelope["envelope_id"]
+    #     )
 
-    if envelopes:
-        background_tasks.add_task(process_after_download)
+    # # Add tasks to wait for downloads and process PDFs
+    # async def process_after_download():
+    #     await downloader.wait_for_downloads()
+    #     await pdf_processor.process_background(auth_info["account_id"])
 
-    return envelopes
+    # if envelopes:
+    #     background_tasks.add_task(process_after_download)
+
+    user_info = UserSchema(name=auth_info["name"], email=auth_info["email"])
+    return user_info
 
 
 @router.get("/json_files", response_model=List[dict])

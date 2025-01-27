@@ -60,6 +60,8 @@ async def validate_docusign_access(token: str = Depends(oauth2_scheme)):
             )
 
         return {
+            "name": user_info["name"],
+            "email": user_info["email"],
             "token": token,
             "account_id": user_info["accounts"][0]["account_id"],
             "base_uri": user_info["accounts"][0]["base_uri"],

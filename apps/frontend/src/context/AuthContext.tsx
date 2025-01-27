@@ -54,7 +54,14 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = () => {
+    // Clear cookies
+    Cookies.remove('auth_token');
+    Cookies.remove('account_id');
+
+    // Clear state
     setToken(null);
+    setAccountId(null);
+
     router.push('/');
   };
 

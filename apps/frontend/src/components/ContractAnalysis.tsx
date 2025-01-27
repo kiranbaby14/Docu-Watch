@@ -31,6 +31,7 @@ import type {
   ProcessingPhase
 } from '@/types/webhook';
 import { DocumentDownload } from './DocumentDownload';
+import UserProfile from './UserProfile ';
 
 interface ContractsAnalysisProps {
   accountId: string;
@@ -96,6 +97,10 @@ interface Contract {
 
 const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
   const { token, signOut, isAuthInitialized } = useAuth();
+  const [userData, setUserData] = useState<{
+    email: string;
+    name: string;
+  } | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -176,13 +181,6 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
           }
         );
 
-        if (!jsonResponse.ok) {
-          if (jsonResponse.status === 401) {
-            await signOut();
-          }
-          throw new Error('Failed to fetch contract analysis');
-        }
-
         const data = await jsonResponse.json();
         setContracts(data);
       } else {
@@ -199,7 +197,7 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
         webhook_url: `${window.location.origin}/api/webhook/${accountId}`
       });
 
-      await fetch(
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/envelopes?${params.toString()}`,
         {
           headers: {
@@ -207,6 +205,13 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
           }
         }
       );
+      const data = await response.json(); // USER and EMAIL data
+
+      // Set user data from the response
+      setUserData({
+        email: data.email,
+        name: data.name
+      });
 
       checkProcessingStatus();
     } catch (err) {
@@ -499,6 +504,16 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
 
   return (
     <>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Contract Analysis</h2>
+        {userData && (
+          <UserProfile
+            email={userData.email}
+            name={userData.name}
+            onLogout={signOut}
+          />
+        )}
+      </div>
       {!processingState.isComplete && (
         <ProcessingModal
           messages={processingState.messages}

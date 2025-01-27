@@ -1,5 +1,5 @@
 from .document import DocumentBaseSchema, DocumentInfoSchema, EnvelopeDocumentsSchema
-from .envelope import EnvelopeSchema, TokenSchema
+from .envelope import EnvelopeSchema, TokenSchema, UserSchema
 from .webhook import WebhookSchema, TerminateMessage
 from .agreement import (
     Party,
@@ -32,4 +32,5 @@ __all__ = [
     "Risk",
     "ObligationStatus",
     "Obligation",
+    "UserSchema",
 ]
