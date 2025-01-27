@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/accordion';
 import type { Contract, Document } from '@/types/contracts';
 import { DocumentDownload } from './DocumentDownload';
+import CopyButton from './CopyButton';
 
 interface ContractsAnalysisProps {
   loading: boolean;
@@ -76,12 +77,17 @@ const ContractsAnalysis: React.FC<ContractsAnalysisProps> = ({
                       <div className="flex w-full items-center justify-between">
                         <div className="space-y-1 text-left">
                           <h3 className="text-xl font-semibold">
-                            {contract.agreement.agreement_name}
+                            {contract.agreement.email_subject}
                           </h3>
-                          <p className="text-sm text-gray-500">
-                            Type: {contract.agreement.agreement_type} | ID:{' '}
-                            {envelopeId}
-                          </p>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>
+                              Type: {contract.agreement.agreement_type}
+                            </span>
+                            <span>|</span>
+                            <span className="flex items-center gap-1">
+                              ID: <CopyButton value={envelopeId} />
+                            </span>
+                          </div>
                         </div>
                         <div className="mr-4 flex items-center">
                           {loadingDocs[envelopeId] ? (
