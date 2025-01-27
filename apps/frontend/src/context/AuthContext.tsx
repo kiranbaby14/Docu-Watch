@@ -8,11 +8,13 @@ interface AuthContextType {
   accountId: string | null;
   setAuth: (token: string | null, accountId: string | null) => void;
   signOut: () => void;
+  isAuthInitialized: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const router = useRouter();
@@ -25,6 +27,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setToken(storedToken);
       setAccountId(storedAccountId);
     }
+    setIsAuthInitialized(true); // Mark auth as initialized
   }, []);
 
   const setAuth = (newToken: string | null, newAccountId: string | null) => {
@@ -56,7 +59,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, accountId, setAuth, signOut }}>
+    <AuthContext.Provider
+      value={{ token, accountId, setAuth, signOut, isAuthInitialized }}
+    >
       {children}
     </AuthContext.Provider>
   );

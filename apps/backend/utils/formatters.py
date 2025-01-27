@@ -22,15 +22,15 @@ def my_excerpt_record_formatter(record: Record) -> RetrieverResultItem:
 def my_vector_search_excerpt_record_formatter(record: Record) -> RetrieverResultItem:
     # set up metadata
     metadata = {
-        "contract_id": record.get("contract_id"),
+        "envelope_id": record.get("envelope_id"),
         "nodeLabels": ["Excerpt", "Agreement", "ContractClause"],
     }
 
     # Reformatting: get individual fields from the RETURN stattement.
-    # RETURN a.name as agreement_name, a.contract_id as contract_id, cc.type as clause_type, node.text as exceprt
+    # RETURN a.name as agreement_name, a.envelope_id as envelope_id, cc.type as clause_type, node.text as exceprt
     result_dict = {}
     result_dict["agreement_name"] = record.get("agreement_name")
-    result_dict["contract_id"] = record.get("contract_id")
+    result_dict["envelope_id"] = record.get("envelope_id")
     result_dict["clause_type"] = record.get("clause_type")
     result_dict["excerpt"] = record.get("excerpt")
 

@@ -3,7 +3,8 @@
 import { useEffect, use } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { ContractsList } from '@/components/ContractsList';
+import ContractsAnalysis from '@/components/ContractAnalysis';
+import Cookies from 'js-cookie';
 
 export default function Dashboard({
   params
@@ -12,26 +13,28 @@ export default function Dashboard({
 }) {
   const resolvedParams = use(params);
   const searchParams = useSearchParams();
-  const { setAuth, token, accountId } = useAuth();
+  const { setAuth, token, accountId, isAuthInitialized } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     // Get token and accountId from URL if present
-    const accessToken = searchParams.get('access_token');
-    const urlAccountId = searchParams.get('account_id');
+    if (isAuthInitialized) {
+      const accessToken = searchParams.get('access_token');
+      const urlAccountId = searchParams.get('account_id');
 
-    if (accessToken && urlAccountId) {
-      setAuth(accessToken, urlAccountId);
-      // Remove params from URL
-      router.replace(`/${urlAccountId}/dashboard`);
-    } else if (!token || !accountId) {
-      // If no auth info in URL or stored, redirect to login
-      router.replace('/');
-    } else if (accountId !== resolvedParams.accountId) {
-      // If URL accountId doesn't match stored accountId, redirect to correct URL
-      router.replace(`/${accountId}/dashboard`);
+      if (accessToken && urlAccountId) {
+        setAuth(accessToken, urlAccountId);
+        // Remove params from URL
+        router.replace(`/${urlAccountId}/dashboard`);
+      } else if (!token || !accountId) {
+        // If no auth info in URL or stored, redirect to login
+        router.replace('/');
+      } else if (accountId !== resolvedParams.accountId) {
+        // If URL accountId doesn't match stored accountId, redirect to correct URL
+        router.replace(`/${accountId}/dashboard`);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, isAuthInitialized]);
 
   if (!token || !accountId) {
     return (
@@ -44,7 +47,7 @@ export default function Dashboard({
   return (
     <div className="p-8">
       <h1 className="mb-6 text-2xl font-bold">Your Documents</h1>
-      <ContractsList accountId={accountId} />
+      <ContractsAnalysis accountId={accountId} />
     </div>
   );
 }

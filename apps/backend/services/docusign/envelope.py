@@ -21,7 +21,7 @@ class EnvelopeService:
         """Get all completed envelopes"""
         try:
             envelope_api = EnvelopesApi(self.api_client)
-            from_date = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+            from_date = (datetime.utcnow() - timedelta(days=3)).strftime("%Y-%m-%d")
 
             response = envelope_api.list_status_changes(
                 account_id=self.account_id,

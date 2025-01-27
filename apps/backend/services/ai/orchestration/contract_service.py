@@ -27,10 +27,10 @@ class ContractSearchService:
         # Create LLM object. Used to generate the CYPHER queries
         self._llm = OpenAILLM(model_name="gpt-4o", model_params={"temperature": 0})
 
-    async def get_contract(self, contract_id: int) -> Agreement:
+    async def get_contract(self, envelope_id: int) -> Agreement:
 
         GET_CONTRACT_BY_ID_QUERY = """
-            MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement {contract_id: $contract_id})
+            MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement {envelope_id: $envelope_id})
             MATCH (a)-[:HAS_CLAUSE]->(clause:ContractClause)
             WITH a, collect(clause) as clauses
             MATCH (country:Country)-[i:INCORPORATED_IN]-(p:Organization)-[r:IS_PARTY_TO]-(a)
@@ -42,7 +42,7 @@ class ContractSearchService:
 
         records, _, _ = self._driver.execute_query(
             GET_CONTRACT_BY_ID_QUERY,
-            {"contract_id": contract_id, "account_id": self._account_id},
+            {"envelope_id": envelope_id, "account_id": self._account_id},
         )
 
         if len(records) == 1:
@@ -186,7 +186,7 @@ class ContractSearchService:
         EXCERPT_TO_AGREEMENT_TRAVERSAL_QUERY = """
             MATCH (acc:Account {account_id: $account_id})-[:HAS_AGREEMENT]->(a:Agreement)
             MATCH (a)-[:HAS_CLAUSE]->(cc:ContractClause)-[:HAS_EXCERPT]-(node) 
-            RETURN a.name as agreement_name, a.contract_id as contract_id, cc.type as clause_type, node.text as excerpt
+            RETURN a.name as agreement_name, a.envelope_id as envelope_id, cc.type as clause_type, node.text as excerpt
         """
 
         # Set up vector Cypher retriever
@@ -211,7 +211,7 @@ class ContractSearchService:
             content = item.content
             a: Agreement = {
                 "agreement_name": content["agreement_name"],
-                "contract_id": content["contract_id"],
+                "envelope_id": content["envelope_id"],
             }
             c: ContractClause = {
                 "clause_type": content["clause_type"],
@@ -228,7 +228,7 @@ class ContractSearchService:
         NEO4J_SCHEMA = """
             Node properties:
             Account {account_id: STRING}
-            Agreement {agreement_type: STRING, contract_id: INTEGER,effective_date: STRING,renewal_term: STRING, name: STRING}
+            Agreement {agreement_type: STRING, envelope_id: INTEGER,effective_date: STRING,renewal_term: STRING, name: STRING}
             ContractClause {type: STRING}
             ClauseType {name: STRING}
             Country {name: STRING}
@@ -281,7 +281,7 @@ class ContractSearchService:
 
         if format == "short" and agreement_node:
             agreement: Agreement = {
-                "contract_id": agreement_node.get("contract_id"),
+                "envelope_id": agreement_node.get("envelope_id"),
                 "name": agreement_node.get("name"),
                 "agreement_type": agreement_node.get("agreement_type"),
             }
@@ -294,7 +294,7 @@ class ContractSearchService:
 
         elif format == "long" and agreement_node:
             agreement: Agreement = {
-                "contract_id": agreement_node.get("contract_id"),
+                "envelope_id": agreement_node.get("envelope_id"),
                 "name": agreement_node.get("name"),
                 "agreement_type": agreement_node.get("agreement_type"),
                 "agreement_date": agreement_node.get("agreement_date"),
@@ -343,15 +343,15 @@ class ContractSearchService:
 
         return parties
 
-    async def get_contract_excerpts(self, contract_id: int):
+    async def get_contract_excerpts(self, envelope_id: int):
 
         GET_CONTRACT_CLAUSES_QUERY = """
-        MATCH (a:Agreement {contract_id: $contract_id})-[:HAS_CLAUSE]->(cc:ContractClause)-[:HAS_EXCERPT]->(e:Excerpt)
+        MATCH (a:Agreement {envelope_id: $envelope_id})-[:HAS_CLAUSE]->(cc:ContractClause)-[:HAS_EXCERPT]->(e:Excerpt)
         RETURN a as agreement, cc.type as contract_clause_type, collect(e.text) as excerpts 
         """
         # run CYPHER query
         clause_records, _, _ = self._driver.execute_query(
-            GET_CONTRACT_CLAUSES_QUERY, {"contract_id": contract_id}
+            GET_CONTRACT_CLAUSES_QUERY, {"envelope_id": envelope_id}
         )
 
         # get a dict d[clause_type]=list(Excerpt)
@@ -398,15 +398,15 @@ class ContractSearchService:
             results.append((clause, risk))
         return results
 
-    async def get_contract_risks(self, contract_id: int) -> List[Risk]:
+    async def get_contract_risks(self, envelope_id: int) -> List[Risk]:
         """Gets all risks associated with a specific contract."""
         CONTRACT_RISKS_QUERY = """
-            MATCH (a:Agreement {contract_id: $contract_id})-[:HAS_RISK]->(r:Risk)
+            MATCH (a:Agreement {envelope_id: $envelope_id})-[:HAS_RISK]->(r:Risk)
             RETURN r as risk
             ORDER BY r.level DESC
             """
         records, _, _ = self._driver.execute_query(
-            CONTRACT_RISKS_QUERY, {"contract_id": contract_id}
+            CONTRACT_RISKS_QUERY, {"envelope_id": envelope_id}
         )
 
         return [

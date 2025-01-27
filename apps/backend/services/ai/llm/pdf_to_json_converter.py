@@ -14,7 +14,7 @@ from utils import read_text_file, save_json_string_to_file, extract_json_from_st
 from ..neo4j.neo4j_indexer import Neo4jIndexer
 from ...notification import WebhookService
 from ...tracking import ProgressTracker, BatchProgressTracker
-from schemas.webhook import ProcessingPhase
+from schemas.webhook import ProcessingPhase, TerminateMessage
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -116,8 +116,8 @@ class PDFProcessor:
             logger.error(f"Error processing PDF {pdf_path}: {e}")
             return None
 
-    async def process_directory(self, base_dir: str | Path) -> bool:
-        """Process all PDFs in the directory structure"""
+    async def process_directory(self, base_dir: str | Path, account_id: str) -> bool:
+        """Process PDFs in the specific account directory matching account_id"""
         base_path = Path(base_dir)
         docusign_path = base_path / "docusign_downloads"
 
@@ -131,54 +131,38 @@ class PDFProcessor:
         output_base.mkdir(exist_ok=True)
         debug_base.mkdir(exist_ok=True)
 
+        json_files_created = False
+
+        # Look for the specific account directory
+        account_dir = docusign_path / account_id
+        if not account_dir.exists() or not account_dir.is_dir():
+            logger.error(f"Account directory not found for account_id: {account_id}")
+            return False
+
         # Count total PDFs for batch tracking
         total_pdfs = sum(1 for _ in docusign_path.rglob("*.pdf"))
         self.batch_tracker = BatchProgressTracker(
             total_pdfs, self.webhook_service, phase=ProcessingPhase.PDF_TO_JSON
         )
 
-        json_files_created = False
+        logger.info(f"Processing account directory: {account_dir}")
 
-        # Process each account directory
-        for account_dir in docusign_path.iterdir():
-            if not account_dir.is_dir():
-                continue
+        # Create account directories
+        account_output = output_base / account_dir.name
+        account_debug = debug_base / account_dir.name
+        account_output.mkdir(exist_ok=True)
+        account_debug.mkdir(exist_ok=True)
 
-            logger.info(f"Processing account directory: {account_dir}")
-
-            # Create account directories
-            account_output = output_base / account_dir.name
-            account_debug = debug_base / account_dir.name
-            account_output.mkdir(exist_ok=True)
-            account_debug.mkdir(exist_ok=True)
-
-            # Register envelope with trackers
-            envelope_id = account_dir.name
-            total_pdfs_in_account = len(list(account_dir.rglob("*.pdf")))
-            await self.progress_tracker.start_envelope(
-                envelope_id, total_pdfs_in_account
-            )
-            await self.batch_tracker.register_envelope(
-                envelope_id, total_pdfs_in_account
-            )
-
-            # Process envelopes
-            created = await self._process_account_envelopes(
-                envelope_id, account_dir, account_output, account_debug
-            )
-            json_files_created |= created
-
-            # Mark envelope complete
-            await self.batch_tracker.complete_envelope(envelope_id)
-            await self.progress_tracker.complete_envelope(
-                envelope_id, [str(p) for p in account_output.rglob("*.json")]
-            )
+        # Process envelopes in this account
+        created = await self._process_account_envelopes(
+            account_dir, account_output, account_debug
+        )
+        json_files_created |= created
 
         return json_files_created
 
     async def _process_account_envelopes(
         self,
-        envelope_id: str,
         account_dir: Path,
         account_output: Path,
         account_debug: Path,
@@ -190,6 +174,8 @@ class PDFProcessor:
             if not envelope_dir.is_dir():
                 continue
 
+            # Get envelope_id from directory name
+            envelope_id = envelope_dir.name
             logger.info(f"Processing envelope directory: {envelope_dir}")
 
             # Create envelope directories
@@ -198,14 +184,28 @@ class PDFProcessor:
             envelope_output.mkdir(exist_ok=True)
             envelope_debug.mkdir(exist_ok=True)
 
-            # Process PDFs in envelope
+            # Get PDF files once
             contract_pdfs = list(envelope_dir.glob("*.pdf"))
+            total_pdfs_in_envelope = len(contract_pdfs)
+
+            await self.progress_tracker.start_envelope(
+                envelope_id, total_pdfs_in_envelope
+            )
+            await self.batch_tracker.register_envelope(
+                envelope_id, total_pdfs_in_envelope
+            )
 
             if contract_pdfs:
                 created = await self._process_envelope_pdf(
                     envelope_id, contract_pdfs[0], envelope_output, envelope_debug
                 )
                 json_files_created |= created
+
+                # Mark envelope complete
+                await self.batch_tracker.complete_envelope(envelope_id)
+                await self.progress_tracker.complete_envelope(
+                    envelope_id, [str(p) for p in envelope_output.rglob("*.json")]
+                )
         return json_files_created
 
     async def _process_envelope_pdf(
@@ -232,7 +232,8 @@ class PDFProcessor:
                     f"Failed to extract valid JSON from response for {pdf_path}"
                 )
                 return False
-
+            contract_json["agreement"]["email_subject"] = pdf_path.name.rstrip(".pdf")
+            contract_json["agreement"]["envelope_id"] = envelope_id
             json_string = json.dumps(contract_json, indent=4)
             output_file = envelope_output / f"{pdf_path.name}.json"
             save_json_string_to_file(json_string, str(output_file))
@@ -246,11 +247,11 @@ class PDFProcessor:
 
         return False
 
-    async def run(self):
+    async def run(self, account_id: str):
         """Main execution method"""
         try:
             # Process PDFs to JSON
-            json_files_created = await self.process_directory("./data")
+            json_files_created = await self.process_directory("./data", account_id)
 
             # Index to Neo4j if files were created
             if json_files_created:
@@ -258,7 +259,9 @@ class PDFProcessor:
                     "JSON files created successfully. Starting Neo4j indexing..."
                 )
                 try:
-                    await self.neo4j_indexer.index_documents(base_dir="./data")
+                    await self.neo4j_indexer.index_documents(
+                        base_dir="./data", account_id=account_id
+                    )
                     logger.info("Neo4j indexing completed successfully")
                 except Exception as e:
                     logger.error(f"Error during Neo4j indexing: {e}")
@@ -269,17 +272,15 @@ class PDFProcessor:
             logger.error(f"Application error: {e}")
             raise
 
-    async def process_background(self):
+    async def process_background(self, account_id: str):
         """Process PDFs asynchronously with webhook notifications"""
         try:
-            await self.run()
-            # if self.webhook_service:
-            #     await self.webhook_service.send_notification(
-            #         {
-            #             "status": "completed",
-            #             "message": "PDF processing completed successfully",
-            #         }
-            #     )
+            await self.run(account_id)
+            if self.webhook_service:
+                webhook_termination_message = TerminateMessage(terminate=True)
+                await self.webhook_service.send_notification(
+                    webhook_termination_message.model_dump()
+                )
         except Exception as e:
             error_msg = f"Error processing PDFs: {e}"
             logger.error(error_msg)

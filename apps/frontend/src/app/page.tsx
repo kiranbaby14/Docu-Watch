@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function Home() {
-  const { token, accountId } = useAuth();
+  const { token, accountId, isAuthInitialized } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (token) {
+    if (isAuthInitialized && token) {
       router.replace(`${accountId}/dashboard`);
     }
-  }, [token, router]);
+  }, [isAuthInitialized]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">

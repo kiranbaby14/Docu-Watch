@@ -11,6 +11,7 @@
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-progress": "^1.1.1",
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@types/js-cookie": "^3.0.6",

@@ -26,7 +26,7 @@ class Neo4jIndexer:
     MERGE (account:Account {account_id: a.account_id})
 
     // Agreement node
-    MERGE (agreement:Agreement {contract_id: a.contract_id})
+    MERGE (agreement:Agreement {envelope_id: a.envelope_id})
     ON CREATE SET 
     agreement.name = a.agreement_name,
     agreement.effective_date = a.effective_date,
@@ -123,7 +123,7 @@ class Neo4jIndexer:
         ),
         (
             "contractIdIndex",
-            "CREATE INDEX agreementContractId IF NOT EXISTS FOR (a:Agreement) ON (a.contract_id)",
+            "CREATE INDEX agreementContractId IF NOT EXISTS FOR (a:Agreement) ON (a.envelope_id)",
         ),
         (
             "riskTypeIndex",
@@ -198,7 +198,7 @@ class Neo4jIndexer:
             logger.error(f"Error creating indices: {e}")
             raise
 
-    async def process_json_files(self, base_dir: str | Path):
+    async def process_json_files(self, base_dir: str | Path, account_id: str):
         """Process JSON files from directory structure and load into Neo4j"""
         base_path = Path(base_dir)
         output_path = base_path / "output"
@@ -207,27 +207,29 @@ class Neo4jIndexer:
             logger.error(f"Output directory not found: {output_path}")
             return
 
+        # Look for the specific account directory
+        account_dir = output_path / account_id
+        if not account_dir.exists() or not account_dir.is_dir():
+            logger.error(f"Account directory not found for account_id: {account_id}")
+            return
+
         # Count total JSON files
         total_files = sum(1 for _ in output_path.rglob("*.json"))
         self.batch_tracker = BatchProgressTracker(
             total_files, self.webhook_service, phase=ProcessingPhase.JSON_TO_GRAPH
         )
 
-        contract_id = 1
-
         # Process each account directory
-        for account_dir in output_path.iterdir():
-            if account_dir.is_dir():
+        for envelope_dir in account_dir.iterdir():
+            if envelope_dir.is_dir():
                 # Register envelope with trackers
-                envelope_id = account_dir.name
-                total_jsons = len(list(account_dir.rglob("*.json")))
+                envelope_id = envelope_dir.name
+                total_jsons = len(list(envelope_dir.rglob("*.json")))
                 await self.progress_tracker.start_envelope(envelope_id, total_jsons)
                 await self.batch_tracker.register_envelope(envelope_id, total_jsons)
 
-                # Process files
-                await self._process_account_directory(
-                    envelope_id, account_dir, contract_id
-                )
+                if envelope_dir.is_dir():
+                    await self._process_envelope_directory(envelope_id, envelope_dir)
 
                 # Mark envelope complete
                 await self.batch_tracker.complete_envelope(envelope_id)
@@ -235,38 +237,21 @@ class Neo4jIndexer:
                     envelope_id, [str(p) for p in account_dir.rglob("*.json")]
                 )
 
-    async def _process_account_directory(
-        self, envelope_id: str, account_dir: Path, contract_id: int
-    ):
-        """Process all envelopes in an account directory"""
-        logger.info(f"Processing account directory: {account_dir}")
-
-        for envelope_dir in account_dir.iterdir():
-            if envelope_dir.is_dir():
-                await self._process_envelope_directory(
-                    envelope_id, envelope_dir, contract_id
-                )
-
-    async def _process_envelope_directory(
-        self, envelope_id: str, envelope_dir: Path, contract_id: int
-    ):
+    async def _process_envelope_directory(self, envelope_id: str, envelope_dir: Path):
         """Process all JSON files in an envelope directory"""
         logger.info(f"Processing envelope directory: {envelope_dir}")
 
         json_files = list(envelope_dir.glob("*.json"))
         for json_file in json_files:
             try:
-                await self._process_json_file(envelope_id, json_file, contract_id)
-                contract_id += 1
+                await self._process_json_file(envelope_id, json_file)
             except Exception as e:
                 await self.progress_tracker.mark_envelope_failed(
                     envelope_id, f"Error processing {json_file}: {str(e)}"
                 )
                 logger.error(f"Error processing {json_file}: {e}")
 
-    async def _process_json_file(
-        self, envelope_id: str, json_file: Path, contract_id: int
-    ):
+    async def _process_json_file(self, envelope_id: str, json_file: Path):
         """Process a single JSON file and load it into Neo4j"""
         try:
             # Update progress
@@ -282,11 +267,10 @@ class Neo4jIndexer:
                 # json_file.parent is envelope dir, json_file.parent.parent is account dir
                 account_id = json_file.parent.parent.name
 
-                # Add contract_id to the agreement
+                # Add envelope_id to the agreement
                 agreement = json_data["agreement"]
-                agreement["contract_id"] = contract_id
+                agreement["envelope_id"] = envelope_id
                 agreement["account_id"] = account_id
-                print(account_id)
 
                 # Execute Neo4j statement
                 self.driver.execute_query(self.CREATE_GRAPH_STATEMENT, data=json_data)
@@ -313,11 +297,13 @@ class Neo4jIndexer:
             logger.error(f"Error generating embeddings: {e}")
             raise
 
-    async def index_documents(self, base_dir: str | Path = "./data"):
+    async def index_documents(
+        self, base_dir: str | Path = "./data", account_id: str = None
+    ):
         """Main method to process documents and create indices"""
         try:
             # Process all JSON files
-            await self.process_json_files(base_dir)
+            await self.process_json_files(base_dir, account_id)
 
             # Create indices
             await self.create_indices()

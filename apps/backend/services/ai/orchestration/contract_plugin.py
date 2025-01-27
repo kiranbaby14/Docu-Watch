@@ -11,10 +11,10 @@ class ContractPlugin:
 
     @kernel_function
     async def get_contract(
-        self, contract_id: int
+        self, envelope_id: int
     ) -> Annotated[Agreement, "A contract"]:
         """Gets details about a contract with the given id."""
-        return await self.contract_search_service.get_contract(contract_id)
+        return await self.contract_search_service.get_contract(envelope_id)
 
     @kernel_function
     async def get_contracts(
@@ -63,11 +63,11 @@ class ContractPlugin:
 
     @kernel_function
     async def get_contract_excerpts(
-        self, contract_id: int
+        self, envelope_id: int
     ) -> Annotated[Agreement, "A contract"]:
         """Gets basic contract details and its excerpts."""
         return await self.contract_search_service.get_contract_excerpts(
-            contract_id=contract_id
+            envelope_id=envelope_id
         )
 
     @kernel_function
@@ -81,10 +81,10 @@ class ContractPlugin:
 
     @kernel_function
     async def get_contract_risks(
-        self, contract_id: int
+        self, envelope_id: int
     ) -> Annotated[List[Risk], "Risks for a specific contract"]:
         """Gets all risks associated with a specific contract."""
-        return await self.contract_search_service.get_contract_risks(contract_id)
+        return await self.contract_search_service.get_contract_risks(envelope_id)
 
     @kernel_function
     async def compare_contracts_by_party(
