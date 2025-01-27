@@ -143,11 +143,7 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
 
       const currentPhase = messages[messages.length - 1]?.phase || 'download';
       const isComplete = messages.some(
-        (msg) =>
-          (msg.type === 'batch' &&
-            msg.status === 'batch_completed' &&
-            msg.phase === 'json_to_graph') ||
-          (msg.type === 'terminate' && msg.terminate === true)
+        (msg) => msg.type === 'terminate' && msg.terminate === true
       );
 
       const progress = (() => {
@@ -170,6 +166,25 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
 
       if (isComplete) {
         await fetch(`/api/webhook/${accountId}`, { method: 'DELETE' });
+
+        const jsonResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/envelopes/json_files`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        if (!jsonResponse.ok) {
+          if (jsonResponse.status === 401) {
+            await signOut();
+          }
+          throw new Error('Failed to fetch contract analysis');
+        }
+
+        const data = await jsonResponse.json();
+        setContracts(data);
       } else {
         setTimeout(checkProcessingStatus, 1000);
       }
@@ -179,7 +194,6 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
   };
 
   const fetchContracts = async () => {
-    console.log('opo');
     try {
       const params = new URLSearchParams({
         webhook_url: `${window.location.origin}/api/webhook/${accountId}`
@@ -194,24 +208,6 @@ const ContractsAnalysis = ({ accountId }: ContractsAnalysisProps) => {
         }
       );
 
-      const jsonResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/envelopes/json_files`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!jsonResponse.ok) {
-        if (jsonResponse.status === 401) {
-          await signOut();
-        }
-        throw new Error('Failed to fetch contract analysis');
-      }
-
-      const data = await jsonResponse.json();
-      setContracts(data);
       checkProcessingStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
