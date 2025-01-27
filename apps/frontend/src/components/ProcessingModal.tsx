@@ -85,19 +85,20 @@ export const ProcessingModal = ({
     const order: Record<ProcessingPhase, number> = {
       download: 1,
       pdf_to_json: 2,
-      json_to_graph: 3
+      json_to_graph: 3,
+      terminate: 4
     };
     return order[phase];
   };
 
-  const isPhaseComplete = (phase: ProcessingPhase): boolean => {
-    return messages.some(
-      (msg) =>
-        msg.type === 'batch' &&
-        msg.status === 'batch_completed' &&
-        msg.phase === phase
-    );
-  };
+  // const isPhaseComplete = (phase: ProcessingPhase): boolean => {
+  //   return messages.some(
+  //     (msg) =>
+  //       msg.type === 'batch' &&
+  //       msg.status === 'batch_completed' &&
+  //       msg.phase === phase
+  //   );
+  // };
 
   const formatMessage = (msg: StoredWebhookMessage) => {
     const phasePrefix = `[${getPhaseLabel(msg.phase)}] `;

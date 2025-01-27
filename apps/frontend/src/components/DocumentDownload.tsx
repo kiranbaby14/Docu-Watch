@@ -15,7 +15,7 @@ const DocumentDownload: React.FC<DocumentDownloadProps> = ({
 }) => {
   const { token } = useAuth();
   const [downloading, setDownloading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent accordion from toggling
@@ -52,8 +52,10 @@ const DocumentDownload: React.FC<DocumentDownloadProps> = ({
 
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Download failed';
+      setError(errorMessage);
       console.error('Download error:', err);
     } finally {
       setDownloading(false);
@@ -68,7 +70,7 @@ const DocumentDownload: React.FC<DocumentDownloadProps> = ({
         onClick={handleDownload}
         onKeyPress={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
-            handleDownload(e as any);
+            handleDownload(e as unknown as React.MouseEvent<HTMLDivElement>);
           }
         }}
         className={`inline-flex cursor-pointer items-center gap-2 rounded-md bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600 ${

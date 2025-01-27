@@ -15,7 +15,9 @@ interface CopyButtonProps {
 const CopyButton = ({ value, displayValue }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  const handleCopy = async (
+    e: React.MouseEvent<HTMLSpanElement> | React.KeyboardEvent<HTMLSpanElement>
+  ) => {
     e.stopPropagation();
     await navigator.clipboard.writeText(value);
     setCopied(true);
@@ -33,7 +35,7 @@ const CopyButton = ({ value, displayValue }: CopyButtonProps) => {
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                handleCopy(e as any);
+                handleCopy(e);
               }
             }}
             className="inline-flex cursor-pointer items-center gap-1 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-600 hover:bg-gray-200"

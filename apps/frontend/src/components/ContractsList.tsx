@@ -5,11 +5,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { DocumentDownload } from './DocumentDownload';
 import { ProcessingModal } from './ProcessingModal';
-import type {
-  StoredWebhookMessage,
-  ProcessingState,
-  ProcessingPhase
-} from '@/types/webhook';
+import type { StoredWebhookMessage, ProcessingState } from '@/types/webhook';
 
 interface ContractsListProps {
   accountId: string;

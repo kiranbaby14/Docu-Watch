@@ -1,6 +1,6 @@
 // src/app/api/webhook/route.ts
 import { NextRequest } from 'next/server';
-import type { StoredWebhookMessage, WebhookMessage } from '@/types/webhook';
+import type { StoredWebhookMessage } from '@/types/webhook';
 
 // Store messages in a map keyed by account_id
 const webhookMessages = new Map<string, StoredWebhookMessage[]>();
@@ -11,7 +11,7 @@ export async function POST(
 ) {
   try {
     const accountId = (await params).accountId;
-    const body = (await request.json()) as WebhookMessage;
+    const body = await request.json();
 
     // Add timestamp and store message
     const storedMessage: StoredWebhookMessage = {

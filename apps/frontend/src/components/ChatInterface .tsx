@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
 
 interface Message {
   id: string;
@@ -19,7 +18,6 @@ interface ChatInterfaceProps {
 const ChatInterface = ({ messages, onSendMessage }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { token } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

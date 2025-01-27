@@ -11,7 +11,8 @@ export type ProcessingStatus =
   | 'completed'
   | 'error'
   | 'batch_progress'
-  | 'batch_completed';
+  | 'batch_completed'
+  | 'terminated';
 
 export type ProcessingType = 'individual' | 'batch';
 
