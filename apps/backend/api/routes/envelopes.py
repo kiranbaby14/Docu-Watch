@@ -52,7 +52,7 @@ async def get_envelopes(
 
     await webhook_service.send_notification(webhook_termination_message.model_dump())
 
-    # # Initialize services
+    # Initialize services
     # downloader = DocumentDownloader(envelope_service, len(envelopes), webhook_service)
     # pdf_processor = PDFProcessor(webhook_service)
 

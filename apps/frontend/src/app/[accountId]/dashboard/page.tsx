@@ -4,7 +4,9 @@ import { useEffect, use } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ContractsAnalysis from '@/components/ContractAnalysis';
-import Cookies from 'js-cookie';
+import ChatInterface from '@/components/ChatInterface ';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LayoutDashboard, MessageSquare } from 'lucide-react';
 
 export default function Dashboard({
   params
@@ -17,20 +19,16 @@ export default function Dashboard({
   const router = useRouter();
 
   useEffect(() => {
-    // Get token and accountId from URL if present
     if (isAuthInitialized) {
       const accessToken = searchParams.get('access_token');
       const urlAccountId = searchParams.get('account_id');
 
       if (accessToken && urlAccountId) {
         setAuth(accessToken, urlAccountId);
-        // Remove params from URL
         router.replace(`/${urlAccountId}/dashboard`);
       } else if (!token || !accountId) {
-        // If no auth info in URL or stored, redirect to login
         router.replace('/');
       } else if (accountId !== resolvedParams.accountId) {
-        // If URL accountId doesn't match stored accountId, redirect to correct URL
         router.replace(`/${accountId}/dashboard`);
       }
     }
@@ -46,8 +44,28 @@ export default function Dashboard({
 
   return (
     <div className="p-8">
-      <h1 className="mb-6 text-2xl font-bold">Your Documents</h1>
-      <ContractsAnalysis accountId={accountId} />
+      <h1 className="mb-6 text-2xl font-bold">Contract Management</h1>
+
+      <Tabs defaultValue="dashboard" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="dashboard" className="space-x-2">
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger value="chat" className="space-x-2">
+            <MessageSquare className="h-4 w-4" />
+            <span>Chat</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="mt-6">
+          <ContractsAnalysis accountId={accountId} />
+        </TabsContent>
+
+        <TabsContent value="chat" className="mt-6">
+          <ChatInterface />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

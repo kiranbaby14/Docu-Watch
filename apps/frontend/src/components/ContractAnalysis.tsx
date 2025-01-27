@@ -49,7 +49,7 @@ interface Risk {
   description: string;
   level: string;
   impact: string;
-  related_clause: string;
+  related_clause?: string;
 }
 
 interface Obligation {
