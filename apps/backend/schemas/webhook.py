@@ -20,6 +20,7 @@ class ProcessingStatus(str, Enum):
 class ProcessingType(str, Enum):
     INDIVIDUAL = "individual"
     BATCH = "batch"
+    TERMINATE = "terminate"
 
 
 class ProcessingPhase(str, Enum):
@@ -111,3 +112,8 @@ class BatchCompletedMessage(BaseModel):
     overall_progress: OverallProgress
     envelope_statuses: Dict[str, EnvelopeStatusInfo]
     phase: ProcessingPhase
+
+
+class TerminateMessage(BaseModel):
+    type: ProcessingType = ProcessingType.TERMINATE
+    terminate: bool = False  # True when this is the final message

@@ -55,9 +55,11 @@ const ContractsList = ({ accountId }: ContractsListProps) => {
       // Check if ALL processing is complete (graph phase is completed)
       const isComplete = messages.some(
         (msg) =>
-          msg.type === 'batch' &&
-          msg.status === 'batch_completed' &&
-          msg.phase === 'json_to_graph'
+          (msg.type === 'batch' &&
+            msg.status === 'batch_completed' &&
+            msg.phase === 'json_to_graph') ||
+          // Check for terminate message
+          (msg.type === 'terminate' && msg.terminate === true)
       );
 
       // Calculate progress based on latest message for current phase

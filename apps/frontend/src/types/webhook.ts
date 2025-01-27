@@ -1,4 +1,8 @@
-export type ProcessingPhase = 'download' | 'pdf_to_json' | 'json_to_graph';
+export type ProcessingPhase =
+  | 'download'
+  | 'pdf_to_json'
+  | 'json_to_graph'
+  | 'terminate';
 
 // Common types
 export type ProcessingStatus =
@@ -96,6 +100,13 @@ export interface BatchCompletedMessage extends StoredMessageBase {
   phase: ProcessingPhase;
 }
 
+interface TerminateMessage extends StoredMessageBase {
+  type: 'terminate';
+  status: 'terminated';
+  phase: 'terminate';
+  terminate: boolean;
+}
+
 // Union type for all webhook messages
 export type StoredWebhookMessage =
   | IndividualStartedMessage
@@ -103,7 +114,8 @@ export type StoredWebhookMessage =
   | IndividualCompletedMessage
   | IndividualErrorMessage
   | BatchProgressMessage
-  | BatchCompletedMessage;
+  | BatchCompletedMessage
+  | TerminateMessage;
 
 // For incoming messages (without timestamp)
 export type WebhookMessage = Omit<StoredWebhookMessage, 'timestamp'>;

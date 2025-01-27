@@ -4,9 +4,13 @@ from typing import List, Optional, Dict
 from services.docusign import EnvelopeService
 from services.document import DocumentDownloader
 from services.notification import WebhookService
-from services.tracking import BatchProgressTracker
 from services.ai import PDFProcessor
-from schemas import EnvelopeSchema, EnvelopeDocumentsSchema, WebhookSchema
+from schemas import (
+    EnvelopeSchema,
+    EnvelopeDocumentsSchema,
+    WebhookSchema,
+    TerminateMessage,
+)
 from core.oauth2 import validate_docusign_access
 
 
@@ -35,6 +39,9 @@ async def get_envelopes(
     if webhook_url:
         webhook_config = WebhookSchema(url=webhook_url, headers=webhook_headers)
         webhook_service = WebhookService(webhook_config)
+        if not envelopes:
+            message = TerminateMessage(terminate=True)
+            await webhook_service.send_notification(message.model_dump())
 
     # Initialize services
     downloader = DocumentDownloader(envelope_service, len(envelopes), webhook_service)
@@ -51,7 +58,8 @@ async def get_envelopes(
         await downloader.wait_for_downloads()
         await pdf_processor.process_background()
 
-    background_tasks.add_task(process_after_download)
+    if envelopes:
+        background_tasks.add_task(process_after_download)
 
     return envelopes
 

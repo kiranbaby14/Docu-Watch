@@ -1,6 +1,6 @@
 from .document import DocumentBaseSchema, DocumentInfoSchema, EnvelopeDocumentsSchema
 from .envelope import EnvelopeSchema, TokenSchema
-from .webhook import WebhookSchema
+from .webhook import WebhookSchema, TerminateMessage
 from .agreement import (
     Party,
     GoverningLaw,
@@ -21,6 +21,7 @@ __all__ = [
     "EnvelopeSchema",
     "TokenSchema",
     "WebhookSchema",
+    "TerminateMessage",
     "Party",
     "GoverningLaw",
     "ContractClause",
