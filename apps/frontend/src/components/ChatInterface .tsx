@@ -11,8 +11,12 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+interface ChatInterfaceProps {
+  messages: Message[];
+  onSendMessage: (message: string) => Promise<void>;
+}
+
+const ChatInterface = ({ messages, onSendMessage }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useAuth();
@@ -63,37 +67,11 @@ const ChatInterface = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    const newUserMessage: Message = {
-      id: Date.now().toString(),
-      content: inputMessage,
-      sender: 'user',
-      timestamp: new Date()
-    };
-
-    setMessages((prev) => [...prev, newUserMessage]);
-    setInputMessage('');
     setIsLoading(true);
+    setInputMessage('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ message: inputMessage })
-      });
-
-      const data = await response.json();
-
-      const assistantMessage: Message = {
-        id: Date.now().toString() + '-assistant',
-        content: data.response,
-        sender: 'assistant',
-        timestamp: new Date()
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      await onSendMessage(inputMessage);
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {

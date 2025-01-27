@@ -12,10 +12,18 @@ import type { StoredWebhookMessage, ProcessingState } from '@/types/webhook';
 import type { Contract, Document } from '@/types/contracts'; // You'll need to move these types to a separate file
 import { UserProfile } from '@/components/UserProfile ';
 
+interface Message {
+  id: string;
+  content: string;
+  sender: 'user' | 'assistant';
+  timestamp: Date;
+}
+
 const Dashboard = ({ params }: { params: Promise<{ accountId: string }> }) => {
   const resolvedParams = use(params);
   const searchParams = useSearchParams();
   const { setAuth, token, accountId, isAuthInitialized, signOut } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
   const router = useRouter();
 
   // Lifted state from ContractsAnalysis
@@ -36,6 +44,41 @@ const Dashboard = ({ params }: { params: Promise<{ accountId: string }> }) => {
     messages: [],
     currentPhase: 'download'
   });
+
+  const handleMessage = async (message: string) => {
+    const newUserMessage: Message = {
+      id: Date.now().toString(),
+      content: message,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages((prev) => [...prev, newUserMessage]);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await response.json();
+
+      const assistantMessage: Message = {
+        id: Date.now().toString() + '-assistant',
+        content: data.response,
+        sender: 'assistant',
+        timestamp: new Date()
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   const checkProcessingStatus = async () => {
     try {
@@ -235,7 +278,7 @@ const Dashboard = ({ params }: { params: Promise<{ accountId: string }> }) => {
         </TabsContent>
 
         <TabsContent value="chat" className="mt-6">
-          <ChatInterface />
+          <ChatInterface messages={messages} onSendMessage={handleMessage} />
         </TabsContent>
       </Tabs>
     </div>
