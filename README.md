@@ -45,6 +45,32 @@ An application that leverages DocuSign, OpenAI, Microsoft semantic-kernel and Ne
 ├── package.json          # Root package.json for monorepo
 └── pnpm-workspace.yaml   # PNPM workspace configuration
 ```
+## 📦 Backend Structure
+```
+.
+├── api/                  # API routes and endpoints
+├── core/                 # Core application logic and configurations
+├── data/                # Database interactions (can be moved to a cloud storage)
+├── schemas/             # Schemas and validators
+├── services/            # Business logic services
+│   ├── ai/             # AI-related services
+│   │   ├── llm/        # Language model implementations
+│   │   ├── neo4j/      # Neo4j database services
+│   │   ├── orchestration/  # Service orchestration logic
+│   │   └── prompts/    # LLM prompt templates
+│   ├── document/       # Document processing services
+│   │   ├── stream.py   # Document streaming functionality
+│   │   └── downloader.py  # Document download handlers
+│   ├── docusign/       # DocuSign integration services
+│   │   ├── auth.py     # Authentication handlers
+│   │   └── envelope.py # Envelope management
+│   ├── notification/   # Notification services
+│   │   └── webhook.py  # Webhook handlers
+│   └── tracking/       # Progress tracking services
+│       ├── batch_progress.py  # Batch progress tracking
+│       └── progress.py        # General progress tracking
+├── utils/              # Utility functions and helpers
+```
 
 ## 🔄 Process Flow
 
