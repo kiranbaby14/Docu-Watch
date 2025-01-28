@@ -23,16 +23,6 @@ class Settings(BaseSettings):
     neo4j_password: str = os.getenv("NEO4J_PASSWORD")
     neo4j_database: str = os.getenv("NEO4J_DATABASE", "neo4j")
 
-    # Gemini Settings
-    gemini_api_key: str = os.getenv("GEMINI_API_KEY")
-    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-pro")
-
-    # Webhook Settings
-    webhook_url: str = os.getenv(
-        "WEBHOOK_URL", "http://localhost:8000/webhook/docusign"
-    )
-    webhook_headers: dict = {}
-
     class Config:
         env_file = ".env"
         extra = "ignore"
@@ -60,13 +50,6 @@ class Settings(BaseSettings):
             "user": self.neo4j_user,
             "password": self.neo4j_password,
             "database": self.neo4j_database,
-        }
-
-    def get_gemini_config(self) -> dict:
-        """Get Gemini configuration"""
-        return {
-            "api_key": self.gemini_api_key,
-            "model": self.gemini_model,
         }
 
 
