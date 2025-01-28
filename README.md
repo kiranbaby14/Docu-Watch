@@ -1,15 +1,21 @@
 # Docu Watch
 
-A monolithic application that leverages DocuSign, OpenAI, and Neo4j to provide intelligent contract analysis and a context-aware chatbot interface.
+An application that leverages DocuSign, OpenAI, Microsoft semantic-kernel and Neo4j to provide intelligent contract analysis and a context-aware chatbot interface.
 
 ## 🏗️ Architecture
 
 ![System Architecture](./images/architecture.svg)
 
+## 🎥 Demo Video
+
+[![DocuWatch Demo](https://img.youtube.com/vi/5giTCyTuFqc/maxresdefault.jpg)](https://www.youtube.com/watch?v=5giTCyTuFqc)
+
+[Watch the full demo on YouTube](https://www.youtube.com/watch?v=5giTCyTuFqc)
+
 ## 🌟 Key Features
 
-- **DocuSign Integration**: Seamless OAuth2 authentication and document retrieval
-- **Intelligent Processing**: Automated contract analysis using OpenAI and Microsoft's Semantic Kernel
+- **DocuSign Integration**: Seamless OAuth2 authentication and document retrieval using Docusign eSignature REST API
+- **Intelligent Processing**: Automated contract analysis using OpenAI's assistant api and Microsoft's Semantic Kernel
 - **Real-time Updates**: Webhook-based progress tracking for background tasks
 - **Graph-based Knowledge**: Neo4j-powered contract relationship mapping
 - **Interactive Chat**: Context-aware contract query system
@@ -19,6 +25,7 @@ A monolithic application that leverages DocuSign, OpenAI, and Neo4j to provide i
 ### Frontend
 - **Next.js**
 - **ShadcN UI**
+- **Tailwind**
 
 ### Backend
 - **Webhooks**: Real-time progress updates
@@ -26,8 +33,7 @@ A monolithic application that leverages DocuSign, OpenAI, and Neo4j to provide i
 - **Microsoft Semantic Kernel**: Advanced LLM integration
 - **OpenAI**
 - **Neo4j**: Graph database for contract relationships
-- **DocuSign SDK**: Document handling and OAuth2
-- **GCP**: Cloud infrastructure
+- **Docusign eSignature REST API**: Document handling and OAuth2
 
 ## 📦 Project Structure
 
@@ -101,8 +107,8 @@ cd docusign-contract-analysis
 pnpm run monorepo-setup
 
 # Set up environment variables
-cp packages/backend/.env.example packages/backend/.env
-cp packages/frontend/.env.example packages/frontend/.env
+cp apps/backend/.env.example apps/backend/.env
+cp apps/frontend/.env.example apps/frontend/.env
 
 # Start development servers
 pnpm run dev  # Starts both frontend and backend servers
@@ -111,8 +117,8 @@ pnpm run dev  # Starts both frontend and backend servers
 ## 🔑 Environment Variables
 
 see `.env.example` inside
-- frontend/
-- backend/
+- apps/frontend/
+- apps/backend/
 
 
 ## 📝 License
